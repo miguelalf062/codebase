@@ -1,0 +1,11 @@
+BEGIN;
+
+CREATE TABLE naming_data();
+ALTER TABLE naming_data ADD COLUMN id SERIAL PRIMARY KEY;
+ALTER TABLE naming_data ADD COLUMN module_id INTEGER REFERENCES modules(id) NOT NULL;
+ALTER TABLE naming_data ADD COLUMN module_name VARCHAR(20) NOT NULL;
+ALTER TABLE naming_data ADD COLUMN past_module_name VARCHAR(20);
+ALTER TABLE naming_data ADD COLUMN last_change TIMESTAMPTZ DEFAULT NOW();
+
+
+COMMIT;
