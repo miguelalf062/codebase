@@ -544,3 +544,27 @@ export async function getForecastedYears() {
   const res = await pool.query("SELECT * FROM forecasted_data_years");
   return res.rows;
 }
+
+export async function getModuleStatus(module_id : number) { 
+  const res = await pool.query(`SELECT * FROM switching_data WHERE module_id=${module_id}`)
+  return res.rows[0];
+}
+
+export async function setModuleStatus(module_id: number, status: boolean) {
+  if (status) {
+    await pool.query(`UPDATE switching_data SET status=TRUE, last_on=now() WHERE module_id=${module_id}`);
+  } else {
+    await pool.query(`UPDATE switching_data SET status=FALSE, last_off=now() WHERE module_id=${module_id}`);
+  }
+}
+
+export async function getModuleName(module_id : number) { 
+  const res = await pool.query(`SELECT * FROM naming_data WHERE module_id=${module_id}`)
+  return res.rows[0];
+}
+
+export async function setModuleName(module_id : number, newName : string) {
+  await pool.query(`UPDATE naming_data SET past_module = module_name WHERE module_id=${module_id}`).then(data => {
+    await pool.query(`UPDATE naming_data SET module_name = ${newName} WHERE module_id=${module_id}`)
+  })
+}

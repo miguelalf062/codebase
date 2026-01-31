@@ -123,8 +123,45 @@ app.get("/api/forecastedData/years", async (req: Request, res: Response) => {
   dbUtility.getForecastedYears().then(data => res.json(data));
 })
 
-// END
+// HANDLE SWITCHING RELAYS API
+app.get("/api/switching/:moduleId/status", async (req: Request, res: Response) => {
+  const module_id = req.params.moduleId;
+  dbUtility.getModuleStatus(module_id).then(data => {
+    res.json(data)
+  })
+})
+app.get("/api/switching/:moduleId/on", async (req: Request, res: Response) => {
+  const module_id = req.params.moduleId;
 
+  // set Device on in esp32 then set module status to on if successful
+
+  dbUtility.setModuleStatus(module_id, true)
+})
+
+app.get("/api/switching/:moduleId/off", async (req: Request, res: Response) => {
+  const module_id = req.params.moduleId;
+
+  // set Device on in esp32 then set module status to off if successful
+
+  dbUtility.setModuleStatus(module_id, false)
+})
+
+// HANDLE NAMING API
+app.get("/api/naming/:moduleId/name", async (req: Request, res: Response) => {
+  const module_id = req.params.moduleId;
+  dbUtility.getModuleName(module_id).then(data => {
+    res.json(data)
+  })
+})
+
+app.get("/api/naming/:moduleId/set/:name", async (req: Request, res: Response) => {
+  const module_id = req.params.moduleId;
+  const newName = req.params.name;
+  dbUtility.setModuleName(module_id, newName);
+})
+
+
+// SERVE CLIENT WITH DASHBOARD
 app.use((_req, res) => {
   res.sendFile(path.join(publicPath, "index.html"));
 });
