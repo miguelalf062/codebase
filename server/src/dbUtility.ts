@@ -514,3 +514,33 @@ export async function getForecastWindows(moduleId: number) {
 
   return { minutes300, hours140, weeks14, months61, years24 };
 }
+
+export async function getForecastedMinutes() {
+  const res = await pool.query("SELECT * FROM forecasted_data_minutes");
+  return res.rows;
+}
+
+export async function getForecastedHours() {
+  const res = await pool.query("SELECT * FROM forecasted_data_hours");
+  return res.rows;
+}
+
+export async function getForecastedDays() {
+  const res = await pool.query("SELECT * FROM forecasted_data_days");
+  return res.rows;
+}
+
+export async function getForecastedWeeks() {
+  const res = await pool.query("SELECT * FROM forecasted_data_weeks");
+  return res.rows;
+}
+
+export async function getForecastedMonths() {
+  const res = await pool.query("SELECT * FROM forecasted_data_months");
+  return res.rows;
+}
+
+export async function getForecastedYears() {
+  const res = await pool.query("SELECT * FROM forecasted_data_years");
+  return res.rows;
+}

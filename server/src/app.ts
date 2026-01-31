@@ -99,6 +99,29 @@ forecasting.startPredictionScheduler();
 dbUtility.fillMissingMinutesWithZeros();
 
 // FORECASTING APIS
+app.get("/api/forecastedData/minutes", async (req: Request, res: Response) => {
+  dbUtility.getForecastedMinutes().then(data => res.json(data));
+})
+
+app.get("/api/forecastedData/hours", async (req: Request, res: Response) => {
+  dbUtility.getForecastedHours().then(data => res.json(data));
+})
+
+app.get("/api/forecastedData/days", async (req: Request, res: Response) => {
+  dbUtility.getForecastedDays().then(data => res.json(data));
+})
+
+app.get("/api/forecastedData/weeks", async (req: Request, res: Response) => {
+  dbUtility.getForecastedWeeks().then(data => res.json(data));
+})
+
+app.get("/api/forecastedData/months", async (req: Request, res: Response) => {
+  dbUtility.getForecastedMonths().then(data => res.json(data));
+})
+
+app.get("/api/forecastedData/years", async (req: Request, res: Response) => {
+  dbUtility.getForecastedYears().then(data => res.json(data));
+})
 
 // END
 
