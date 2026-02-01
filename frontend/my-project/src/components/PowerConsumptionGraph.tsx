@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip,
@@ -7,8 +6,6 @@ import {
 type dataset = { day: string; value: number }[];
 
 const PowerConsumptionGraph = (props : {dashboardGraphData: dataset}) => {
-    const [dumbData] = useState<dataset>(props.dashboardGraphData); 
-
     return (
     <div className="xl:col-span-3 xl:flex xl:justify-center">
           <div className='flex xl:w-[90%] xl:h-[40vh] justify-center'>         
@@ -18,9 +15,9 @@ const PowerConsumptionGraph = (props : {dashboardGraphData: dataset}) => {
               
     
             
-              <LineChart  style={{ width: '90%', height: 280}} responsive data={dumbData}>
+              <LineChart  style={{ width: '90%', height: 280}} responsive data={props.dashboardGraphData}>
                 <Line stroke="#F5B335" dataKey="value" name="Power Consumption" strokeWidth={2}/>
-                <XAxis dataKey="day" tickFormatter={value => value.split(" ")[1]} /> 
+                <XAxis dataKey="day" tickFormatter={(_,index) => (index+1).toString()} /> 
                 <YAxis width={40} tick={{ fontSize: 10 }} tickFormatter={(value) => `${(value / 1000).toFixed(1)}`}label={{value:"kiloWatt-hour", fontSize: 14,angle: -90, position:"insideLeft", textAnchor:"middle"}} />
                 <CartesianGrid />
                 <Tooltip />

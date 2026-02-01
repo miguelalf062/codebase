@@ -1,4 +1,11 @@
+import { timeStamp } from "console";
 import { pool } from "./db/index";
+
+export async function readModulesData() {
+  const res = await pool.query("SELECT * FROM modules");
+  return res.rows;
+}
+
 
 export async function readMinutesData() {
   const res = await pool.query("SELECT * FROM module_data_minute");
@@ -67,7 +74,7 @@ export async function writeForecastMinutesData(moduleID: number, minute: number,
 }
 export async function writeForecastHoursData(moduleID: number, hour: number, current: number, voltage: number, power: number) {
   const res = await pool.query(`INSERT INTO forecast_data_hours(module_id, hour, current, voltage, power) VALUES(${moduleID}, ${hour}, ${current}, ${voltage}, ${power});`);
-    return res;
+  return res;
 }
 export async function writeForecastDaysData(moduleID: number, day: number, current: number, voltage: number, power: number) {
   const res = await pool.query(`INSERT INTO forecast_data_days(module_id, day, current, voltage, power) VALUES(${moduleID}, ${day}, ${current}, ${voltage}, ${power});`);
@@ -85,6 +92,32 @@ export async function writeForecastYearsData(moduleID: number, year: number, cur
   const res = await pool.query(`INSERT INTO forecast_data_years(module_id, year, current, voltage, power) VALUES(${moduleID}, ${year}, ${current}, ${voltage}, ${power});`);
     return res;
 }
+
+export async function deleteForecastHoursData() {
+  const res = await pool.query(`DELETE FROM forecast_data_hours`);
+  return res;
+}
+
+export async function deleteForecastDaysData() {
+  const res = await pool.query(`DELETE FROM forecast_data_days`);
+  return res;
+}
+
+export async function deleteForecastWeeksData() {
+  const res = await pool.query(`DELETE FROM forecast_data_weeks`);
+  return res;
+}
+
+export async function deleteForecastMonthsData() {
+  const res = await pool.query(`DELETE FROM forecast_data_hours`);
+  return res;
+}
+
+export async function deleteForecastYearsData() {
+  const res = await pool.query(`DELETE FROM forecast_data_yearss`);
+  return res;
+}
+
 
 export async function rollupHours() {
   await pool.query(`
@@ -370,6 +403,21 @@ export type YearlyRow = {
   avg_voltage: string;
   total_power: string;
 };
+export async function getLastUploadedMinuteData(moduleId: string) {
+  const { rows } = await pool.query<MinuteRow>(
+    `
+    SELECT module_id, current, voltage, power, timestamp
+    FROM module_data_minute
+    WHERE module_id = $1
+    ORDER BY timestamp DESC
+    LIMIT 1;
+    `,
+    [moduleId]
+  );
+
+  return rows[0] ?? null;
+}
+
 
 export async function getLast300Minutes(moduleId: number): Promise<MinuteRow[]> {
   const { rows } = await pool.query<MinuteRow>(
@@ -399,6 +447,100 @@ export async function getLast140Hours(moduleId: number): Promise<HourlyRow[]> {
   );
 
   return rows.reverse();
+}
+
+export async function getTodayHourlyData() {
+  const { rows } = await pool.query<HourlyRow>(
+    `
+    SELECT module_id, hour_start, avg_current, avg_voltage, total_power
+    FROM module_data_hourly
+    WHERE hour_start >= date_trunc('day', NOW())
+      AND hour_start <  date_trunc('day', NOW()) + INTERVAL '1 day'
+    ORDER BY hour_start ASC;
+    `
+  );
+  return rows;
+}
+
+export async function getYesterdayDailyData() {
+  const { rows } = await pool.query<DailyRow>(
+    `
+    SELECT module_id, day, avg_current, avg_voltage, total_power
+    FROM module_data_daily
+    WHERE day = date_trunc('day', NOW()) - INTERVAL '1 day'
+    ORDER BY module_id;
+    `
+  );
+
+  return rows;
+}
+
+export async function getThisWeekData() {
+  const { rows } = await pool.query(
+    `
+    SELECT module_id, week_start, avg_current, avg_voltage, total_power
+    FROM module_data_weekly
+    WHERE week_start >= date_trunc('week', NOW())
+      AND week_start <  date_trunc('week', NOW()) + INTERVAL '1 week'
+    ORDER BY week_start ASC;
+    `
+  );
+  return rows;
+}
+
+export async function getThisWeekHourlyData() {
+  const { rows } = await pool.query<HourlyRow>(
+    `
+    SELECT module_id, hour_start, avg_current, avg_voltage, total_power
+    FROM module_data_hourly
+    WHERE hour_start >= date_trunc('week', NOW())
+      AND hour_start <  date_trunc('week', NOW()) + INTERVAL '1 week'
+    ORDER BY hour_start ASC;
+    `
+  );
+
+  return rows;
+}
+
+export async function getThisMonthHourlyData() {
+  const { rows } = await pool.query<HourlyRow>(
+    `
+    SELECT module_id, hour_start, avg_current, avg_voltage, total_power
+    FROM module_data_hourly
+    WHERE hour_start >= date_trunc('month', NOW())
+      AND hour_start <  date_trunc('month', NOW()) + INTERVAL '1 month'
+    ORDER BY hour_start ASC;
+    `
+  );
+
+  return rows;
+}
+
+export async function getThisMonthData() {
+  const { rows } = await pool.query(
+    `
+    SELECT module_id, month_start, avg_current, avg_voltage, total_power
+    FROM module_data_monthly
+    WHERE month_start >= date_trunc('month', NOW())
+      AND month_start <  date_trunc('month', NOW()) + INTERVAL '1 month'
+    ORDER BY month_start ASC;
+    `
+  );
+  return rows;
+}
+
+export async function getLastMonthData() {
+  const { rows } = await pool.query<MonthlyRow>(
+    `
+    SELECT module_id, month_start, avg_current, avg_voltage, total_power
+    FROM module_data_monthly
+    WHERE month_start >= date_trunc('month', NOW()) - INTERVAL '1 month'
+      AND month_start <  date_trunc('month', NOW())
+    ORDER BY module_id;
+    `
+  );
+
+  return rows;
 }
 
 export async function getLast14Weeks(moduleId: number): Promise<WeeklyRow[]> {
@@ -516,32 +658,32 @@ export async function getForecastWindows(moduleId: number) {
 }
 
 export async function getForecastedMinutes() {
-  const res = await pool.query("SELECT * FROM forecasted_data_minutes");
+  const res = await pool.query("SELECT * FROM forecast_data_minutes");
   return res.rows;
 }
 
 export async function getForecastedHours() {
-  const res = await pool.query("SELECT * FROM forecasted_data_hours");
+  const res = await pool.query("SELECT * FROM forecast_data_hours");
   return res.rows;
 }
 
 export async function getForecastedDays() {
-  const res = await pool.query("SELECT * FROM forecasted_data_days");
+  const res = await pool.query("SELECT * FROM forecast_data_days");
   return res.rows;
 }
 
 export async function getForecastedWeeks() {
-  const res = await pool.query("SELECT * FROM forecasted_data_weeks");
+  const res = await pool.query("SELECT * FROM forecast_data_weeks");
   return res.rows;
 }
 
 export async function getForecastedMonths() {
-  const res = await pool.query("SELECT * FROM forecasted_data_months");
+  const res = await pool.query("SELECT * FROM forecast_data_months");
   return res.rows;
 }
 
 export async function getForecastedYears() {
-  const res = await pool.query("SELECT * FROM forecasted_data_years");
+  const res = await pool.query("SELECT * FROM forecast_data_years");
   return res.rows;
 }
 
@@ -564,7 +706,65 @@ export async function getModuleName(module_id : number) {
 }
 
 export async function setModuleName(module_id : number, newName : string) {
-  await pool.query(`UPDATE naming_data SET past_module = module_name WHERE module_id=${module_id}`).then(data => {
+  await pool.query(`UPDATE naming_data SET past_module = module_name WHERE module_id=${module_id}`).then(async data => {
     await pool.query(`UPDATE naming_data SET module_name = ${newName} WHERE module_id=${module_id}`)
   })
+}
+
+type DashboardModuleRow = {
+  module_id: number;
+  module_name: string | null;
+  status: boolean | null;
+  current: string | number | null;
+  voltage: string | number | null;
+  power: string | number | null;
+  timestamp: string;
+};
+
+export async function getDashboardModules() {
+  const { rows } = await pool.query<DashboardModuleRow>(`
+    WITH latest AS (
+      SELECT DISTINCT ON (m.module_id)
+        m.module_id,
+        m.timestamp,
+        m.current,
+        m.voltage,
+        m.power
+      FROM module_data_minute m
+      ORDER BY m.module_id, m.timestamp DESC
+    ),
+    module_ids AS (
+      SELECT module_id FROM module_data_minute
+      UNION
+      SELECT module_id FROM naming_data
+      UNION
+      SELECT module_id FROM switching_data
+    )
+    SELECT
+      ids.module_id,
+      n.module_name,
+      s.status,
+      l.current,
+      l.voltage,
+      l.power,
+      l.timestamp
+    FROM module_ids ids
+    LEFT JOIN latest l
+      ON l.module_id = ids.module_id
+    LEFT JOIN naming_data n
+      ON n.module_id = ids.module_id
+    LEFT JOIN switching_data s
+      ON s.module_id = ids.module_id
+    ORDER BY ids.module_id ASC;
+  `);
+
+  return rows.map((x) => ({
+    id: x.module_id,
+    name: x.module_name ?? `Module ${x.module_id}`,
+    status: x.status ?? false,
+    current: Number(x.current ?? 0),
+    voltage: Number(x.voltage ?? 0),
+    power: Number(x.power ?? 0),
+    timeStamp: x.timestamp,
+  }));
 }

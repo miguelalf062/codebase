@@ -17,7 +17,7 @@ type ForecastResult = {
   data: number[];
 };
 
-async function runForecastProcess(processMethod : string, data : number[]) : Promise<ForecastResult> {
+export async function runForecastProcess(processMethod : string, data : number[]) : Promise<ForecastResult> {
   return new Promise((resolve, reject) => {
     const payload = { process: processMethod, data }
     const script = path.resolve(process.cwd(), "src/processing/predict.py");
@@ -59,8 +59,6 @@ async function runForecastProcess(processMethod : string, data : number[]) : Pro
     py.stdin.write(JSON.stringify(payload));
     py.stdin.end();
   })
-  
-  
 }
 
 // runForecastProcess("hourly", newPayload).then(data => {
@@ -119,7 +117,8 @@ async function runHourlyForecast() {
 
     console.log("running hourly forecast update...");
 
-    dbUtility.getLast300Minutes(modules.module1).then(async (data) => {
+    dbUtility.deleteForecastHoursData().then(res => {
+        dbUtility.getLast300Minutes(modules.module1).then(async (data) => {
         const currentData = data.map(prev => parseFloat(prev.current))
         const voltageData = data.map(prev => parseFloat(prev.voltage))
         const powerData = data.map(prev => parseFloat(prev.power))
@@ -151,570 +150,576 @@ async function runHourlyForecast() {
             console.error("Forecast failed — missing data");
             return;
         }
-         forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastDaysData(modules.module1, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
-    })
-    dbUtility.getLast300Minutes(modules.module2).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.current))
-        const voltageData = data.map(prev => parseFloat(prev.voltage))
-        const powerData = data.map(prev => parseFloat(prev.power))
 
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("hourly", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("hourly", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("hourly", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+        forecastedCurrentData.map((data, index) => {
+            if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+            dbUtility.writeForecastHoursData(modules.module1, index, data, forecastedVoltageData[index],forecastedPowerData[index])
+        })
+        })
+        dbUtility.getLast300Minutes(modules.module2).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.current))
+            const voltageData = data.map(prev => parseFloat(prev.voltage))
+            const powerData = data.map(prev => parseFloat(prev.power))
+
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("hourly", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("hourly", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("hourly", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastHoursData(modules.module2, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-         forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastDaysData(modules.module2, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
-    })
-    dbUtility.getLast300Minutes(modules.module3).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.current))
-        const voltageData = data.map(prev => parseFloat(prev.voltage))
-        const powerData = data.map(prev => parseFloat(prev.power))
+        })
+        dbUtility.getLast300Minutes(modules.module3).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.current))
+            const voltageData = data.map(prev => parseFloat(prev.voltage))
+            const powerData = data.map(prev => parseFloat(prev.power))
 
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("hourly", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("hourly", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("hourly", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("hourly", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("hourly", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("hourly", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastHoursData(modules.module3, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-         forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastDaysData(modules.module3, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
+        })
     })
-
 }
 async function runDailyForecast() { 
-
     console.log("running hourly daily update...");
+    dbUtility.deleteForecastDaysData().then(res => {
+        dbUtility.getLast140Hours(modules.module1).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
 
-    dbUtility.getLast140Hours(modules.module1).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
-
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("daily", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("daily", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("daily", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("daily", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("daily", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("daily", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastDaysData(modules.module1, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastDaysData(modules.module1, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
 
-    })
+        })
+        dbUtility.getLast140Hours(modules.module2).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
 
-    dbUtility.getLast140Hours(modules.module2).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
-
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("daily", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("daily", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("daily", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("daily", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("daily", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("daily", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastDaysData(modules.module2, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastDaysData(modules.module2, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
 
-    })
+        })
+        dbUtility.getLast140Hours(modules.module3).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
 
-    dbUtility.getLast140Hours(modules.module3).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
-
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("daily", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("daily", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("daily", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("daily", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("daily", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("daily", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastDaysData(modules.module3, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastDaysData(modules.module3, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
 
+        })       
     })
 }
 async function runWeeklyForecast() {
 
     console.log("running weekly forecast update...");
 
-    dbUtility.getLast14Days(modules.module1).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
+    dbUtility.deleteForecastWeeksData().then(res => { 
+        dbUtility.getLast14Days(modules.module1).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
 
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("weekly", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("weekly", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("weekly", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("weekly", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("weekly", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("weekly", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastWeeksData(modules.module1, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastWeeksData(modules.module1, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
 
-    })
+        })
 
-    dbUtility.getLast14Days(modules.module2).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
+        dbUtility.getLast14Days(modules.module2).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
 
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("weekly", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("weekly", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("weekly", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("weekly", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("weekly", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("weekly", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastWeeksData(modules.module2, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastWeeksData(modules.module2, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
 
-    })
+        })
 
-    dbUtility.getLast14Days(modules.module3).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
+        dbUtility.getLast14Days(modules.module3).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
 
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("weekly", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("weekly", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("weekly", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("weekly", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("weekly", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("weekly", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastWeeksData(modules.module3, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastWeeksData(modules.module3, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
 
+        })
     })
-
 }
 async function runMonthlyForecast() {
 
     console.log("running monthly forecast update...");
 
-    dbUtility.getLast61Days(modules.module1).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
+    dbUtility.deleteForecastMonthsData().then(res => {
+        dbUtility.getLast61Days(modules.module1).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
 
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("monthly", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("monthly", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("monthly", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("monthly", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("monthly", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("monthly", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastMonthsData(modules.module1, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastMonthsData(modules.module1, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
 
+        })
+
+        dbUtility.getLast61Days(modules.module2).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
+
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("monthly", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("monthly", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("monthly", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastMonthsData(modules.module2, index, data, forecastedVoltageData[index],forecastedPowerData[index])
+            })
+
+        })
+
+        dbUtility.getLast61Days(modules.module3).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
+
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("monthly", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("monthly", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("monthly", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastMonthsData(modules.module3, index, data, forecastedVoltageData[index],forecastedPowerData[index])
+            })
+
+        })
     })
 
-    dbUtility.getLast61Days(modules.module2).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
-
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("monthly", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("monthly", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("monthly", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastMonthsData(modules.module2, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
-
-    })
-
-    dbUtility.getLast61Days(modules.module3).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
-
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("monthly", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("monthly", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("monthly", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastMonthsData(modules.module3, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
-
-    })
+    
  }
 async function runYearlyForecast() { 
 
     console.log("running yearly forecast update...");
 
-    dbUtility.getLast24Months(modules.module1).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
+    dbUtility.deleteForecastYearsData().then(res => {
+        dbUtility.getLast24Months(modules.module1).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
 
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("yearly", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("yearly", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("yearly", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("yearly", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("yearly", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("yearly", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastYearsData(modules.module1, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastYearsData(modules.module1, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
 
-    })
+        })
 
-    dbUtility.getLast24Months(modules.module2).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
+        dbUtility.getLast24Months(modules.module2).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
 
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("yearly", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("yearly", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("yearly", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("yearly", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("yearly", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("yearly", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastYearsData(modules.module2, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastYearsData(modules.module2, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
 
-    })
+        })
 
-    dbUtility.getLast24Months(modules.module3).then(async (data) => {
-        const currentData = data.map(prev => parseFloat(prev.avg_current))
-        const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
-        const powerData = data.map(prev => parseFloat(prev.avg_voltage))
+        dbUtility.getLast24Months(modules.module3).then(async (data) => {
+            const currentData = data.map(prev => parseFloat(prev.avg_current))
+            const voltageData = data.map(prev => parseFloat(prev.avg_voltage))
+            const powerData = data.map(prev => parseFloat(prev.avg_voltage))
 
-        const [
-        forecastedCurrentData,
-        forecastedVoltageData,
-        forecastedPowerData
-        ] = await Promise.all([
-            runForecastProcess("yearly", currentData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("yearly", voltageData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
-            }),
-            runForecastProcess("yearly", powerData).then(data => {
-                if (data === null ||data === undefined) return;
-                return data.data.map(prev => parseFloat(prev.toFixed(2)));
+            const [
+            forecastedCurrentData,
+            forecastedVoltageData,
+            forecastedPowerData
+            ] = await Promise.all([
+                runForecastProcess("yearly", currentData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("yearly", voltageData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                }),
+                runForecastProcess("yearly", powerData).then(data => {
+                    if (data === null ||data === undefined) return;
+                    return data.data.map(prev => parseFloat(prev.toFixed(2)));
+                })
+            ])
+            
+            if (
+            !forecastedCurrentData ||
+            !forecastedVoltageData ||
+            !forecastedPowerData
+            ) {
+                console.error("Forecast failed — missing data");
+                return;
+            }
+            forecastedCurrentData.map((data, index) => {
+                if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
+                dbUtility.writeForecastYearsData(modules.module3, index, data, forecastedVoltageData[index],forecastedPowerData[index])
             })
-         ])
-        
-         if (
-        !forecastedCurrentData ||
-        !forecastedVoltageData ||
-        !forecastedPowerData
-        ) {
-            console.error("Forecast failed — missing data");
-            return;
-        }
-        forecastedCurrentData.map((data, index) => {
-            if (!forecastedVoltageData[index] || !forecastedPowerData[index]) return;
-             dbUtility.writeForecastYearsData(modules.module3, index, data, forecastedVoltageData[index],forecastedPowerData[index])
-         })
 
+        })  
     })
  }
 
@@ -737,7 +742,6 @@ export async function startPredictionScheduler() {
   const tick = async () => {
     if (running2) return;
     running2 = true;
-
     try {
       // HOURLY
       {

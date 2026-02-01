@@ -3,7 +3,7 @@ BEGIN;
 CREATE TABLE switching_data();
 ALTER TABLE switching_data ADD COLUMN id SERIAL PRIMARY KEY;
 ALTER TABLE switching_data ADD COLUMN module_id INTEGER REFERENCES modules(id) NOT NULL;
-ALTER TABLE switching_data ADD COLUMN status BOOLEAN DEFAULT "false";
+ALTER TABLE switching_data ADD COLUMN status BOOLEAN DEFAULT false;
 ALTER TABLE switching_data ADD COLUMN last_on TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE switching_data ADD COLUMN last_off TIMESTAMPTZ DEFAULT NOW();
 

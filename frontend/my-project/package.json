@@ -7,7 +7,8 @@
     "dev": "vite --host",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && rmdir /s /q ..\\..\\server\\public && mkdir ..\\..\\server\\public && xcopy dist ..\\..\\server\\public /E /I /Y && cd ..\\..\\server && npm run dev"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",

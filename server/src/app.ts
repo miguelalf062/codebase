@@ -75,6 +75,50 @@ app.use(express.json());
 function isInterval(x: unknown): x is Interval {
   return typeof x === "string" && (intervals as readonly string[]).includes(x);
 }
+app.get("/api/last/hours", async (req: Request, res: Response) => {  
+  const data = await dbUtility.getTodayHourlyData();
+  res.json(data);
+});
+
+app.get("/api/last/yesterday", async (req: Request, res: Response) => {  
+  const data = await dbUtility.getYesterdayDailyData();
+  res.json(data);
+});
+
+app.get("/api/last/weeks", async (req: Request, res: Response) => {  
+  const data = await dbUtility.getThisWeekData();
+  res.json(data);
+});
+
+app.get("/api/weeksByHour", async (req: Request, res: Response) => {  
+  const data = await dbUtility.getThisWeekHourlyData();
+  res.json(data);
+});
+
+app.get("/api/monthsByHour", async (req: Request, res: Response) => {  
+  const data = await dbUtility.getThisMonthHourlyData();
+  res.json(data);
+});
+ 
+app.get("/api/last/months", async (req: Request, res: Response) => {  
+  const data = await dbUtility.getLastMonthData();
+  res.json(data);
+});
+
+app.get("/api/modules", async (req: Request, res: Response) => {
+  const data = await dbUtility.readModulesData();
+  res.json(data);
+})
+
+app.get("/api/module/:moduleID", async (req: Request, res: Response) => {  
+  const moduleID = req.params.moduleID as string;
+  if (!moduleID) return;
+
+  const data = await dbUtility.getLastUploadedMinuteData(moduleID);
+  res.json(data);
+});
+
+
 
 app.get("/api/:params", async (req: Request, res: Response) => {
   const interval = req.params.params;
@@ -92,7 +136,8 @@ app.get("/api/:params", async (req: Request, res: Response) => {
     res.status(500).json({ error: e });
   }
 });
- 
+
+
 // SCHEDULED PROCESSES
 forecasting.doRollups();
 forecasting.startPredictionScheduler();
@@ -102,6 +147,13 @@ dbUtility.fillMissingMinutesWithZeros();
 app.get("/api/forecastedData/minutes", async (req: Request, res: Response) => {
   dbUtility.getForecastedMinutes().then(data => res.json(data));
 })
+
+// dbUtility.getLast300Minutes(1).then(data => {
+//   let newData = data.map(x => parseFloat(x.current));
+//   forecasting.runForecastProcess("hourly", newData).then(data => {
+//     console.log(data.data);
+//   })
+// })
 
 app.get("/api/forecastedData/hours", async (req: Request, res: Response) => {
   dbUtility.getForecastedHours().then(data => res.json(data));
@@ -125,41 +177,55 @@ app.get("/api/forecastedData/years", async (req: Request, res: Response) => {
 
 // HANDLE SWITCHING RELAYS API
 app.get("/api/switching/:moduleId/status", async (req: Request, res: Response) => {
-  const module_id = req.params.moduleId;
-  dbUtility.getModuleStatus(module_id).then(data => {
+  const module_id = req.params.moduleId as string;
+  dbUtility.getModuleStatus(parseInt(module_id)).then(data => {
     res.json(data)
   })
 })
 app.get("/api/switching/:moduleId/on", async (req: Request, res: Response) => {
-  const module_id = req.params.moduleId;
+  const module_id = req.params.moduleId as string;
 
   // set Device on in esp32 then set module status to on if successful
 
-  dbUtility.setModuleStatus(module_id, true)
+  dbUtility.setModuleStatus(parseInt(module_id), true)
 })
 
 app.get("/api/switching/:moduleId/off", async (req: Request, res: Response) => {
-  const module_id = req.params.moduleId;
+  const module_id = req.params.moduleId as string;
 
   // set Device on in esp32 then set module status to off if successful
 
-  dbUtility.setModuleStatus(module_id, false)
+  dbUtility.setModuleStatus(parseInt(module_id), false)
 })
+
+app.get("/api/dashboard/modules", async (_req, res) => {
+  try {
+    const data = await dbUtility.getDashboardModules();
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load dashboard modules" });
+  }
+});
+
+
 
 // HANDLE NAMING API
 app.get("/api/naming/:moduleId/name", async (req: Request, res: Response) => {
-  const module_id = req.params.moduleId;
-  dbUtility.getModuleName(module_id).then(data => {
+  const module_id = req.params.moduleId as string;
+  dbUtility.getModuleName(parseInt(module_id)).then(data => {
     res.json(data)
   })
 })
 
 app.get("/api/naming/:moduleId/set/:name", async (req: Request, res: Response) => {
-  const module_id = req.params.moduleId;
-  const newName = req.params.name;
-  dbUtility.setModuleName(module_id, newName);
+  const module_id = req.params.moduleId as string;
+  const newName = req.params.name as string;
+  dbUtility.setModuleName(parseInt(module_id), newName);
 })
 
+
+// SERVE TESTING FILES
 
 // SERVE CLIENT WITH DASHBOARD
 app.use((_req, res) => {
