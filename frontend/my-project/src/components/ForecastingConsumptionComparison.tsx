@@ -1,4 +1,4 @@
-const ComsumptionComparison = ({currentConsumption = 42, yesterdayConsumption = 80} : {currentConsumption: number, yesterdayConsumption: number}) => {
+const ForecastingComsumptionComparison = ({currentConsumption = 42, yesterdayConsumption = 80} : {currentConsumption: number, yesterdayConsumption: number}) => {
   const size = 300;
   const strokeWidth = 40;
   const progress = currentConsumption/yesterdayConsumption * 100 > 100 ? 100 : Math.round((currentConsumption/yesterdayConsumption) * 100);
@@ -43,7 +43,7 @@ const ComsumptionComparison = ({currentConsumption = 42, yesterdayConsumption = 
         fontWeight="bold"
         fill="#2E5E8A"
       >
-        Current Consumption
+        Forecast Comparison
       </text>
       <text
         x="50%"
@@ -61,7 +61,7 @@ const ComsumptionComparison = ({currentConsumption = 42, yesterdayConsumption = 
         y="62.5%"
         textAnchor="middle"
         dominantBaseline="middle"
-        fontSize={size * 0.09}
+        fontSize={size * 0.1}
         fontWeight="bold"
         fill="#F5B335"
       >
@@ -86,11 +86,11 @@ const ComsumptionComparison = ({currentConsumption = 42, yesterdayConsumption = 
         fontWeight=""
         fill="#2E5E8A"
       >
-        {currentConsumption > yesterdayConsumption ? "more" : "less"} than yesterday
+        {currentConsumption > yesterdayConsumption ? "more" : "less"} than Forecast
       </text>
     </svg>
     </div>
   )
 }
 
-export default ComsumptionComparison
+export default ForecastingComsumptionComparison

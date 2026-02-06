@@ -30,48 +30,129 @@ const handlers : Record<Interval, () => Promise<dbResponse[]>>= {
 };
 
 //MQTT Client Setup
-const client = mqtt.connect("mqtt://broker.hivemq.com"); // public broker for testing
+const MQTT_URL = process.env.MQTT_URL ?? "mqtt://localhost:1883";
+const TELEMETRY_TOPIC = process.env.MQTT_TELEMETRY_TOPIC ?? "telemetry/#";
 
-client.on("connect", () => {
-  console.log("✅ MQTT connected");
 
-  // Subscribe to all module data topics
-  client.subscribe("home/+/data", (err) => {
-    if (err) console.error("Subscription error:", err);
-    else console.log("Subscribed to home/+/data topics");
+
+type MinutePayload = {
+  device: string;
+  module: number;
+  ts: number;
+  relay: number;
+  current: number;
+  voltage: number;
+  power: number; 
+};
+
+
+const SUB_TOPICS = [
+  "tele/+/module/+/minute",
+  "stat/+/module/+/relay",
+  "stat/+/online",
+];
+
+
+function isFiniteNumber(x: unknown): x is number {
+  return typeof x === "number" && Number.isFinite(x);
+}
+function parseTeleMinuteTopic(
+  topic: string
+): { device: string; moduleId: number } | null {
+  // tele/esp32-1/module/1/minute
+  const m = topic.match(/^tele\/([^/]+)\/module\/(\d+)\/minute$/);
+
+  if (!m || !m[1] || !m[2]) return null;
+
+  return {
+    device: m[1],          
+    moduleId: Number(m[2])
+  };
+}
+function parseRelayTopic(
+  topic: string
+): { device: string; moduleId: number } | null {
+  // stat/esp32-1/module/1/relay
+  const m = topic.match(/^stat\/([^/]+)\/module\/(\d+)\/relay$/);
+
+  if (!m || !m[1] || !m[2]) return null;
+
+  return {
+    device: m[1],
+    moduleId: Number(m[2])
+  };
+}
+const client = mqtt.connect(MQTT_URL);
+
+export function startMqttIngest() {
+
+  client.on("connect", () => {
+    console.log("[MQTT] connected:", MQTT_URL);
+    client.subscribe(SUB_TOPICS, (err) => {
+      if (err) console.error("[MQTT] subscribe error:", err);
+      else console.log("[MQTT] subscribed:", SUB_TOPICS.join(", "));
+    });
   });
-});
-// Listen for incoming messages
-client.on("message", async (topic : string, message) => {
-  try {
-    const parts = topic.split("/");
 
-    if (!parts[1]) {
-      console.error("Invalid topic format:", topic);
+  client.on("error", (err) => console.error("[MQTT] error:", err));
+
+  client.on("message", async (topic, buf) => {
+    const msg = buf.toString("utf8");
+    const teleInfo = parseTeleMinuteTopic(topic);
+    if (teleInfo) {
+      let data: MinutePayload;
+      try {
+        data = JSON.parse(msg);
+      } catch {
+        console.warn("[MQTT] bad JSON on", topic, msg.slice(0, 200));
+        return;
+      }
+
+      const moduleId = teleInfo.moduleId;
+      const current = Number(data.current);
+      const voltage = Number(data.voltage);
+
+      if (!Number.isFinite(current) || !Number.isFinite(voltage)) {
+        console.warn("[MQTT] invalid numbers on", topic, { current: data.current, voltage: data.voltage });
+        return;
+      }
+      const power = Number.isFinite(Number(data.power)) ? Number(data.power) : current * voltage;
+
+      try {
+        const result = await dbUtility.writeMinutesData(moduleId, current, voltage, power);
+        console.log("[DB] inserted minute:", teleInfo.device, moduleId, power, result);
+      } catch (e) {
+        console.error("[DB] insert failed:", e);
+      }
       return;
     }
 
-    const moduleIdStr = parts[1].replace("module", "");
-    const module_id = parseInt(moduleIdStr);
+    const relayInfo = parseRelayTopic(topic);
+    if (relayInfo) {
+      const state = msg.trim(); // "OFF" / "ON"
+      //console.log(`[MQTT] relay state ${relayInfo.device} module ${relayInfo.moduleId}: ${state}`);
 
-    if (isNaN(module_id)) {
-      console.error("Invalid module id:", moduleIdStr);
+      const result = await dbUtility.setModuleStatus(relayInfo.moduleId, state === "ON");
+      //console.log("[DB] set module status:", relayInfo.device, relayInfo.moduleId, state === "ON", result);
       return;
     }
 
-    const payload = JSON.parse(message.toString());
-  
-  } catch (err) {
-    console.error("Error handling MQTT message:", err);
-  }
-});
+    if (/^stat\/[^/]+\/online$/.test(topic)) {
+      //console.log("[MQTT] device presence:", topic, msg.trim());
+      return;
+    }
 
-// Serve static files
+  });
+
+  return client;
+}
+
+startMqttIngest();
+
 app.use(express.static(path.join(__dirname, "../public")));
 
 app.use(express.json());    
 
-// get db
 function isInterval(x: unknown): x is Interval {
   return typeof x === "string" && (intervals as readonly string[]).includes(x);
 }
@@ -118,6 +199,103 @@ app.get("/api/module/:moduleID", async (req: Request, res: Response) => {
   res.json(data);
 });
 
+app.get("/api/history", async (req: Request, res: Response) => {
+  try {
+    const data = await dbUtility.getDashboardFrontendData();
+    res.json(data);
+  } catch (err) {
+    console.error("GET /api/dashboard failed:", err);
+    res.status(500).json({ error: "Failed to load dashboard" });
+  }
+});
+
+app.get("/api/forecasting/:name", async (req: Request, res: Response) => {
+  try {
+    const name = req.params.name;
+    const moduleId = req.query.moduleId ? Number(req.query.moduleId) : undefined;
+    const hasModuleId = Number.isFinite(moduleId);
+
+    const takeN = <T,>(arr: T[], n: number) => arr.slice(0, n);
+
+    // Build an object: { [moduleId]: points[] } and slice during build
+    const buildByModule = async <T,>(
+      fn: (mid: number) => Promise<T[]>,
+      n: number
+    ): Promise<Record<number, T[]>> => {
+      const moduleIds = await dbUtility.getModuleIds();
+      const out: Record<number, T[]> = {};
+      for (const mid of moduleIds) {
+        const rows = await fn(mid);
+        out[mid] = takeN(rows, n);
+      }
+      return out;
+    };
+
+  if (name === "hours24") {
+  const [actual, forecast] = await Promise.all([
+    dbUtility.getActualHours24_AllModules(),
+    dbUtility.getForecastHours24_AllModules(),
+  ]);
+
+  return res.json({ actual, forecast, splitIndex: actual.length });
+}
+
+if (name === "days7") {
+  const [actual, forecast] = await Promise.all([
+    dbUtility.getActualDays7_AllModules(),
+    dbUtility.getForecastDays7_AllModules(),
+  ]);
+
+  return res.json({ actual, forecast, splitIndex: actual.length });
+}
+
+if (name === "days30") {
+  const [actual, forecast] = await Promise.all([
+    dbUtility.getActualDays30_AllModules(),
+    dbUtility.getForecastDays30_AllModules(),
+  ]);
+
+  return res.json({ actual, forecast, splitIndex: actual.length });
+}
+    if (name === "monthTotals") {
+      if (hasModuleId) {
+        const totals = await dbUtility.getThisMonthTotals(moduleId as number);
+        return res.json({ moduleId, ...totals });
+      }
+
+      const moduleIds = await dbUtility.getModuleIds();
+      const totalsByModule: Record<number, Awaited<ReturnType<typeof dbUtility.getThisMonthTotals>>> = {};
+
+      let sumActual = 0;
+      let sumForecastRemaining = 0;
+      let sumFull = 0;
+
+      for (const mid of moduleIds) {
+        const t = await dbUtility.getThisMonthTotals(mid);
+        totalsByModule[mid] = t;
+        sumActual += t.actualThisMonth;
+        sumForecastRemaining += t.forecastRemainingThisMonth;
+        sumFull += t.forecastFullMonthEstimate;
+      }
+
+      return res.json({
+        totalsByModule,
+        totalsAllModules: {
+          actualThisMonth: sumActual,
+          forecastRemainingThisMonth: sumForecastRemaining,
+          forecastFullMonthEstimate: sumFull,
+        },
+      });
+    }
+
+    return res.status(400).json({
+      error: "Invalid name. Use: hours24 | days7 | days30 | monthTotals",
+    });
+  } catch (err) {
+    console.error("GET /api/forecasting/:name failed:", err);
+    return res.status(500).json({ error: "Failed to load forecasting data" });
+  }
+});
 
 
 app.get("/api/:params", async (req: Request, res: Response) => {
@@ -183,19 +361,35 @@ app.get("/api/switching/:moduleId/status", async (req: Request, res: Response) =
   })
 })
 app.get("/api/switching/:moduleId/on", async (req: Request, res: Response) => {
-  const module_id = req.params.moduleId as string;
+  const module_id = parseInt(req.params.moduleId as string);
 
-  // set Device on in esp32 then set module status to on if successful
+  const topic = `cmnd/esp32-1/module/${module_id}/relay`;
 
-  dbUtility.setModuleStatus(parseInt(module_id), true)
+  const ok = client.publish(topic, "ON");
+
+  await new Promise(r => setTimeout(r, 300));
+
+  const result = await dbUtility.setModuleStatus(module_id, true);
+
+  res.json({ status: "sent ON", topic, result });
 })
 
 app.get("/api/switching/:moduleId/off", async (req: Request, res: Response) => {
-  const module_id = req.params.moduleId as string;
+  const moduleId = parseInt(req.params.moduleId as string);
 
-  // set Device on in esp32 then set module status to off if successful
+  const topic = `cmnd/esp32-1/module/${moduleId}/relay`;
 
-  dbUtility.setModuleStatus(parseInt(module_id), false)
+  const ok = client.publish(topic, "OFF");
+
+  if (!ok) {
+    return res.status(500).json({ error: "MQTT publish failed" });
+  }
+
+  await new Promise(r => setTimeout(r, 300));
+
+  const result = await dbUtility.setModuleStatus(moduleId, false);
+
+  res.json({ status: "sent OFF", topic, result });
 })
 
 app.get("/api/dashboard/modules", async (_req, res) => {
@@ -221,7 +415,8 @@ app.get("/api/naming/:moduleId/name", async (req: Request, res: Response) => {
 app.get("/api/naming/:moduleId/set/:name", async (req: Request, res: Response) => {
   const module_id = req.params.moduleId as string;
   const newName = req.params.name as string;
-  dbUtility.setModuleName(parseInt(module_id), newName);
+  const result = await dbUtility.setModuleName(parseInt(module_id), newName);
+  res.json({ success: result });
 })
 
 

@@ -4,12 +4,19 @@ import Forecasting from './Forecasting'
 import History from './History'
 
 type dataset = { day: string; value: number }[];
+
 const dummyData: dataset = [];
+const dummyForecastData: dataset = [];
 for (let i = 1; i <= 24; i++) {
   dummyData.push({
-    day: `Hour   ${i}`,
-    value: Math.floor(Math.random() * 3000) + 1 
+    day: `Hour ${i}`,
+    value: Math.floor(Math.random() * 3000) + 1
   });
+  dummyForecastData.push({
+     day: `Hour ${24 + i}`,
+    value: Math.floor(Math.random() * 3000) + 1 
+  })
+
 }
 
 const Content = ({ activeTab }: { activeTab: string }) => {

@@ -32,7 +32,8 @@ const Dashboard = (props : {dashboardGraphData: dataset}) => {
   useEffect(() => {
     const fetchHourlyData = () => {
       fetch("/api/last/hours").then(data => data.json()).then((data : hourlyDataPoint[]) => {
-          const consumption: Record<string, number> = {}
+        console.log(data)  
+        const consumption: Record<string, number> = {}
           //Object.fromEntries(
           //  Array.from({ length: 24 }, (_, h) => [h.toString().padStart(2, "0"), 0])
           //);
@@ -83,7 +84,7 @@ const Dashboard = (props : {dashboardGraphData: dataset}) => {
         })
         
         data.forEach(dataPoint => {
-            perDeviceThisMonthConsumption[`Module ${dataPoint.module_id}`] += 0;
+            perDeviceThisMonthConsumption[`Module ${dataPoint.module_id}`] += parseFloat((parseFloat(dataPoint.total_power) / 1000).toFixed(2));
         })
 
         // set device ranking
@@ -128,14 +129,14 @@ const Dashboard = (props : {dashboardGraphData: dataset}) => {
     <div>
       {/* 1st group container*/}
       <div className="xl:grid xl:grid-cols-6 mt-5">
-        <PowerConsumptionGraph dashboardGraphData={graphData} />
+        <PowerConsumptionGraph dashboardGraphData={graphData} label='24 hrs'/>
         <div className='flex border-1 border-white items-center mt-[2.5px] xl:col-span-3 h-[30vh] xl:h-[40vh]'>
           <div className="flex flex-col h-full border-1 border-white w-1/2 h-full">
-          <ConsumptionCounter totalConsumption={weeklyConsumption} label="This Week" />
-          <ConsumptionCounter totalConsumption={monthlyConsumption} label="This Month" />
+          <ConsumptionCounter totalConsumption={parseFloat((weeklyConsumption / 1000).toFixed(2))} label="This Week" />
+          <ConsumptionCounter totalConsumption={parseFloat((monthlyConsumption / 1000).toFixed(2))} label="This Month" />
           </div>
           <div className="w-1/2 border-1 border-white h-full">
-          <ComsumptionComparison currentConsumption={totalPowerConsumptionToday} yesterdayConsumption={totalPowerConsumptionYesterday}/>
+          <ComsumptionComparison currentConsumption={parseFloat((totalPowerConsumptionToday / 1000).toFixed(2))} yesterdayConsumption={parseFloat((totalPowerConsumptionYesterday / 1000).toFixed(2))}/>
           </div>
         </div>
       </div>

@@ -1,14 +1,14 @@
-const ComsumptionComparison = ({currentConsumption = 42, yesterdayConsumption = 80} : {currentConsumption: number, yesterdayConsumption: number}) => {
+const MonthlyConsumptionComparison = ({currentConsumption = 42, lastMonthConsumption = 80} : {currentConsumption: number, lastMonthConsumption: number}) => {
   const size = 300;
   const strokeWidth = 40;
-  const progress = currentConsumption/yesterdayConsumption * 100 > 100 ? 100 : Math.round((currentConsumption/yesterdayConsumption) * 100);
+  const progress = currentConsumption/lastMonthConsumption * 100 > 100 ? 100 : Math.round((currentConsumption/lastMonthConsumption) * 100);
 
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className="flex justify-center items-center scale-100 w-full h-full xl:scale-75">
+    <div className="flex justify-center items-center scale-75 w-full h-full xl:scale-75">
     <svg width={size} height={size}  viewBox={`0 0 ${size} ${size}`}>
       {/* Background circle (yellow) */}
       <circle
@@ -43,7 +43,7 @@ const ComsumptionComparison = ({currentConsumption = 42, yesterdayConsumption = 
         fontWeight="bold"
         fill="#2E5E8A"
       >
-        Current Consumption
+        This Month Consumption
       </text>
       <text
         x="50%"
@@ -61,11 +61,11 @@ const ComsumptionComparison = ({currentConsumption = 42, yesterdayConsumption = 
         y="62.5%"
         textAnchor="middle"
         dominantBaseline="middle"
-        fontSize={size * 0.09}
+        fontSize={size * 0.1}
         fontWeight="bold"
         fill="#F5B335"
       >
-        {Math.abs(yesterdayConsumption - currentConsumption)} kWh
+        {Math.abs(lastMonthConsumption - currentConsumption)} kWh
       </text>
       <text
         x="72.5%"
@@ -73,7 +73,7 @@ const ComsumptionComparison = ({currentConsumption = 42, yesterdayConsumption = 
         textAnchor="middle"
         dominantBaseline="middle"
         fontSize={size * 0.1}
-        fill={ currentConsumption > yesterdayConsumption ? "#FF0000" : "#00AA00" }
+        fill={ currentConsumption > lastMonthConsumption ? "#FF0000" : "#00AA00" }
       >
         ▼
       </text>
@@ -86,11 +86,11 @@ const ComsumptionComparison = ({currentConsumption = 42, yesterdayConsumption = 
         fontWeight=""
         fill="#2E5E8A"
       >
-        {currentConsumption > yesterdayConsumption ? "more" : "less"} than yesterday
+        {currentConsumption > lastMonthConsumption ? "more" : "less"} than last month
       </text>
     </svg>
     </div>
   )
 }
 
-export default ComsumptionComparison
+export default MonthlyConsumptionComparison

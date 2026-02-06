@@ -2,7 +2,7 @@ import path from "path";
 
 import * as dbUtility  from "./dbUtility";
 import { spawn } from "child_process";
-
+import * as forecasting2 from "./forecasting2";
 
 
 const newPayload = []
@@ -122,7 +122,6 @@ async function runHourlyForecast() {
         const currentData = data.map(prev => parseFloat(prev.current))
         const voltageData = data.map(prev => parseFloat(prev.voltage))
         const powerData = data.map(prev => parseFloat(prev.power))
-
         const [
         forecastedCurrentData,
         forecastedVoltageData,
@@ -150,6 +149,7 @@ async function runHourlyForecast() {
             console.error("Forecast failed — missing data");
             return;
         }
+        console.log(forecastedCurrentData.length);
 
         forecastedCurrentData.map((data, index) => {
             if ((forecastedVoltageData[index]) == null  || (forecastedPowerData[index] == null)) return;
@@ -747,7 +747,7 @@ export async function startPredictionScheduler() {
       {
         const { run, bucketStart } = await dbUtility.shouldRun("hourly", "hour");
         if (run && bucketStart) {
-          await runHourlyForecast();
+          await forecasting2.runHourlyForecast();
           await dbUtility.markRan("hourly", bucketStart);
           console.log("✅ hourly forecast ran for bucket", fmtPH(bucketStart));
         }
@@ -757,7 +757,7 @@ export async function startPredictionScheduler() {
       {
         const { run, bucketStart } = await dbUtility.shouldRun("daily", "day");
         if (run && bucketStart) {
-          await runDailyForecast();
+          await forecasting2.runDailyForecast();
           await dbUtility.markRan("daily", bucketStart);
           console.log("✅ daily forecast ran for bucket", fmtPH(bucketStart));
         }
@@ -777,7 +777,7 @@ export async function startPredictionScheduler() {
       {
         const { run, bucketStart } = await dbUtility.shouldRun("monthly", "month");
         if (run && bucketStart) {
-          await runMonthlyForecast();
+          await forecasting2.runMonthlyForecast();
           await dbUtility.markRan("monthly", bucketStart);
           console.log("✅ monthly forecast ran for bucket", fmtPH(bucketStart));
         }
@@ -787,7 +787,7 @@ export async function startPredictionScheduler() {
       {
         const { run, bucketStart } = await dbUtility.shouldRun("yearly", "year");
         if (run && bucketStart) {
-          await runYearlyForecast();
+          await forecasting2.runYearlyForecast();
           await dbUtility.markRan("yearly", bucketStart);
           console.log("✅ yearly forecast ran for bucket", fmtPH(bucketStart));
         }
