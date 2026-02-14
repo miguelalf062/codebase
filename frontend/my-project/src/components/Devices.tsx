@@ -23,7 +23,7 @@ const Devices = () => {
       try {
         const res = await fetch("/api/dashboard/modules");
         const modulesData: DevicesData[] = await res.json();
-
+        console.log("Done fetching modules data status:", res.status);
         if (isMounted) {
           setDevicesData(modulesData);
         }
@@ -34,13 +34,15 @@ const Devices = () => {
 
     fetchModules();
 
+    const INTERVAL_SECONDS = 5; // CHANGE KUNG ILAN TRIP NA INTERVAL
+
     const now = new Date();
     const msUntilNextMinute =
-      (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+      (INTERVAL_SECONDS - now.getSeconds()) * 1000 - now.getMilliseconds();
 
     const timeoutId = window.setTimeout(() => {
       fetchModules();
-      intervalId = window.setInterval(fetchModules, 60_000);
+      intervalId = window.setInterval(fetchModules, INTERVAL_SECONDS * 1000);
     }, msUntilNextMinute);
 
     return () => {

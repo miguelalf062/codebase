@@ -62,9 +62,18 @@ type historyDeviceData = {
 // every device day,month,year consumption
 // device last on
 // current device active time
-
+// http://localhost:3000/api/switching/1/status
+//{"id":1,"module_id":1,"status":false,"last_on":"2026-02-13T21:56:34.274Z","last_off":"2026-02-13T21:57:50.065Z"}
+export type deviceStatus = {
+  id: number;
+  module_id: number;
+  status: boolean;
+  last_on: string | null;
+  last_off: string | null;
+}
 const History = () => {
   const [historyData, setHistoryData] = useState<DashboardData | null>(null);
+  const [moduleActiveTime, setModuleActiveTime] = useState<deviceStatus []| null>(null);
   const [historyDeviceDataSet, setHistoryDeviceDataSet] = useState<historyDeviceData[] | null>(null);
   const [, setLoading] = useState(true);
   const [, setError] = useState<string | null>(null);
@@ -91,7 +100,6 @@ const History = () => {
           monthlyAverageUsage: dataset.yearlyPowerConsumption.reduce((sum, d) => sum + d.value, 0) / dataset.yearlyPowerConsumption.length || 0
         }
       }));
-
     } catch (e) {
       const err = e instanceof Error ? e : new Error("Unknown error");
       setError(err.message);
@@ -102,15 +110,31 @@ const History = () => {
 
   }
 
+  async function fetchModulesActiveTime () {
+    try {
+      const res = await fetch("/api/switching/all");
+      if (!res.ok) throw new Error("Failed to fetch modules active time");
+      const data = await res.json();
+      setModuleActiveTime(data);
+
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error("Unknown error");
+      setError(err.message);
+    }
+  }
+
   useEffect(() => {
     // 1) Fetch immediately when component mounts
     fetchHistory();
-
-    // 2) Refresh every hour (3600000 ms)
+    fetchModulesActiveTime();
+    // 2) Refresh at x time
     const interval = setInterval(fetchHistory, 60 * 60 * 1000);
-
+    const interval2 = setInterval(fetchModulesActiveTime, 5 * 1000);
     // 3) Cleanup when component unmounts
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      clearInterval(interval2);
+    };
   }, []);
   console.log(historyData)
 
@@ -145,7 +169,7 @@ function yearMonthToText(ym: string) {
       </div>
       <div className="xl:mt-[300px] w-[full] h-[30vh] flex justify-center items-center">
             <div className="hidden xl:block w-full flex justify-center h-[850px]">
-              <DeviceHistory historyDeviceDataSet={historyDeviceDataSet || []} />
+              <DeviceHistory historyDeviceDataSet={historyDeviceDataSet || []} deviceStatuses={moduleActiveTime || []} />
             </div>
             <div className="mt-[650px] block xl:hidden w-full flex justify-center h-[850px]">
               <DeviceHistoryMobile historyDeviceDataSet={historyDeviceDataSet || []} />

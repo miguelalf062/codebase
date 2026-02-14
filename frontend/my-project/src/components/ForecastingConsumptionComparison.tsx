@@ -50,7 +50,7 @@ const ForecastingComsumptionComparison = ({currentConsumption = 42, yesterdayCon
         y="50%"
         textAnchor="middle"
         dominantBaseline="middle"
-        fontSize={size * 0.15}
+        fontSize={size * 0.1}
         fontWeight="bold"
         fill="#2E5E8A"
       >

@@ -30,7 +30,7 @@ const DeviceRankingConsumption = ({deviceData = [
                                 <div className="xl:w-[50%] w-[30%] bg-gray-300 h-2 rounded-xl">
                                     <div className={`transition duration-300 ease-in-out h-full bg-yellow-500 rounded-xl`} style={{ width: `${Math.floor(device.consumption / deviceData[0].consumption * 100)}%` }}></div>
                                 </div>
-                                <h1 className="w-[20%] text-[#FFFFFF] font-bold text-[12px] ml-auto mr-2 w-fit">{device.consumption} kWh</h1>
+                                <h1 className="w-[20%] text-[#FFFFFF] font-bold text-[12px] ml-auto mr-2 w-fit">{device.consumption.toFixed(2)} kWh</h1>
                             </div>
                         )
                         })

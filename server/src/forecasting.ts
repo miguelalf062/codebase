@@ -740,6 +740,15 @@ function fmtPH(ts: string | Date) {
 
 export async function startPredictionScheduler() {
   const tick = async () => {
+    //runAll();
+    async function runAll () {
+        await forecasting2.runHourlyForecast();
+        await forecasting2.runDailyForecast();
+        await runWeeklyForecast();
+        await forecasting2.runMonthlyForecast();
+        await forecasting2.runYearlyForecast();
+    }
+
     if (running2) return;
     running2 = true;
     try {

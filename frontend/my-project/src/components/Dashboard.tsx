@@ -26,38 +26,52 @@ const Dashboard = (props : {dashboardGraphData: dataset}) => {
   // {name: 'Washing Machine', consumption: 250},    
   // {name: 'Television', consumption: 100},   
 
-  const [meralcoRate] = useState(13.47);
+  const [meralcoRate] = useState(12.95);
   const [estimatedBill, setEstimatedBill] = useState(0)
 
   useEffect(() => {
     const fetchHourlyData = () => {
-      fetch("/api/last/hours").then(data => data.json()).then((data : hourlyDataPoint[]) => {
-        console.log(data)  
-        const consumption: Record<string, number> = {}
-          //Object.fromEntries(
-          //  Array.from({ length: 24 }, (_, h) => [h.toString().padStart(2, "0"), 0])
-          //);
+      fetch("/api/last/hours").then(res => res.json()).then((data: hourlyDataPoint[]) => {
+          console.log(data);
+          const consumption: Record<string, number> = Object.fromEntries(
+            Array.from({ length: 24 }, (_, h) => [String(h).padStart(2, "0"), 0])
+          );
 
           let totalPowerToday = 0;
           if (!data) return;
-          data.forEach(dataPoint => {
-              const hour = dataPoint.hour_start[11] + dataPoint.hour_start[12]
-              consumption[hour] = 0;
-          })
 
-          data.forEach(dataPoint => {
-              const hour = dataPoint.hour_start[11] + dataPoint.hour_start[12]
-              consumption[hour] += parseFloat(dataPoint.total_power);
-              totalPowerToday += parseFloat(dataPoint.total_power);
-          })
+          data.forEach((dataPoint) => {
+            const hour = new Date(dataPoint.hour_start)
+              .getHours()
+              .toString()
+              .padStart(2, "0");
 
-          const newGraphData = Object.keys(consumption).sort()
-            .map(hour => ({day: `hour ${parseInt(hour) + 1}`, value: consumption[hour]}));
+            const power = parseFloat(dataPoint.total_power);
 
-          console.log(newGraphData)
+            consumption[hour] += power;
+            totalPowerToday += power;
+          });
+          
+          const now = new Date();
+          const currentHour = now.getHours() - 1;
+
+          const newGraphData = Object.keys(consumption)
+          .sort()
+          .map((hour) => ({
+            day: `hour ${parseInt(hour)}`,
+            value: consumption[hour],
+          }))
+          .filter(item => {
+            const hourNum = Number(item.day.replace("hour ", ""));
+            return hourNum <= currentHour;
+          });
+
+          console.log(newGraphData);
+
           setGraphData(newGraphData);
           setTotalPowerConsumptionToday(totalPowerToday);
-      })
+        });
+
 
       fetch("/api/last/yesterday").then(data => data.json()).then((data : hourlyDataPoint[]) => {
         let totalPowerYesterday = 0; 
@@ -89,7 +103,7 @@ const Dashboard = (props : {dashboardGraphData: dataset}) => {
 
         // set device ranking
         const deviceRankingFormatted = Object.keys(perDeviceThisMonthConsumption).map(device => {
-          return {name: device, consumption: perDeviceThisMonthConsumption[device] }
+          return {name: `Port ${device.split(" ")[1]}`, consumption: perDeviceThisMonthConsumption[device] }
         }).sort((a, b) => b.consumption - a.consumption);
         setDeviceRankings(deviceRankingFormatted);
         console.log(deviceRankingFormatted)

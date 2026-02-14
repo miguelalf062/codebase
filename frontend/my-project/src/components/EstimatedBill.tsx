@@ -9,7 +9,7 @@ const EstimatedBill = ({estimatedBill = 1000, prevBill = 1200, meralcoRate = 13.
             <div className='xl:scale-100 scale-90 w-full flex flex-col justify-center align-center *:text-center *:m-0 mr-6'>
               <h1 className='text-xl font-bold'>Estimated Bill</h1>
               <h1 className='text-[20px] font-extrabold m-0 p-0'>P{estimatedBill} <span className={prevBill > estimatedBill ? "text-[#00AA00]" : prevBill < estimatedBill ? "text-[#FF0000]" : "text-gray-500"}> {prevBill > estimatedBill ? "▲" : prevBill < estimatedBill ? "▼" : "—"} </span></h1> 
-              <h1>based on Meralco rate of</h1>
+              <h1 className='text-[10px]'>based on Meralco rate as of January 2026</h1>
               <h1 className='font-bold'>P{meralcoRate}/kWh</h1>
             </div>
         </div>

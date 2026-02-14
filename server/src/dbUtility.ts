@@ -182,7 +182,7 @@ export async function deleteForecastMonthsData() {
 }
 
 export async function deleteForecastYearsData() {
-  const res = await pool.query(`DELETE FROM forecast_data_yearss`);
+  const res = await pool.query(`DELETE FROM forecast_data_years`);
   return res;
 }
 
@@ -201,7 +201,7 @@ export async function rollupHours() {
       date_trunc('hour', timestamp) AS hour_start,
       ROUND(AVG(current), 2) AS avg_current,
       ROUND(AVG(voltage), 2) AS avg_voltage,
-      ROUND(SUM(power), 2) AS total_power
+      ROUND(AVG(power), 2) AS total_power
     FROM module_data_minute
     WHERE timestamp < date_trunc('hour', NOW()) -- completed hours only
     GROUP BY module_id, hour_start
@@ -755,6 +755,11 @@ export async function getForecastedYears() {
   return res.rows;
 }
 
+export async function getAllModulesStatus() {
+  const res = await pool.query(`SELECT * FROM switching_data`);
+  return res.rows;
+}
+
 export async function getModuleStatus(module_id : number) { 
   const res = await pool.query(`SELECT * FROM switching_data WHERE module_id=${module_id}`)
   return res.rows[0];
@@ -1147,7 +1152,6 @@ export async function getForecastHours24(moduleId?: number) {
       (SELECT ft FROM latest) AS forecast_timestamp
   `;
 
-  // if moduleId is used in actual clause too, push it once more:
   if (Number.isFinite(moduleId)) params.push(moduleId);
 
   const { rows } = await pool.query(q, params);
@@ -1519,4 +1523,37 @@ export async function getForecastDays30_AllModules() {
     LIMIT 30;
   `);
   return rows;
+}
+
+export async function setLastOnNow(moduleId: number) {
+  await pool.query(`
+    UPDATE switching_data
+    SET status = TRUE, last_on = NOW()
+    WHERE module_id = $1;
+  `, [moduleId]); 
+} 
+
+export async function setLastOffNow(moduleId: number) {
+  await pool.query(`
+    UPDATE switching_data
+    SET status = FALSE, last_off = NOW()
+    WHERE module_id = $1;
+  `, [moduleId]); 
+}
+
+export async function setStatusChange(moduleId: number, status: boolean) {
+  await pool.query(`
+    UPDATE switching_data
+    SET statuschanged = $2
+    WHERE module_id = $1;
+  `, [moduleId, status]); 
+}
+
+export async function getStatusChange(moduleId: number) {
+  const { rows } = await pool.query(`
+    SELECT statuschanged
+    FROM switching_data
+    WHERE module_id = $1;
+  `, [moduleId]);
+  return rows[0]?.statuschanged;
 }

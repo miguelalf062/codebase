@@ -84,7 +84,9 @@ function parseRelayTopic(
 }
 const client = mqtt.connect(MQTT_URL);
 
-export function startMqttIngest() {
+const modulesStatus : Record<number, { shouldSetOff: boolean }> = {};
+
+function startMqttIngest() {
 
   client.on("connect", () => {
     console.log("[MQTT] connected:", MQTT_URL);
@@ -117,10 +119,25 @@ export function startMqttIngest() {
         return;
       }
       const power = Number.isFinite(Number(data.power)) ? Number(data.power) : current * voltage;
-
+                  
       try {
         const result = await dbUtility.writeMinutesData(moduleId, current, voltage, power);
-        console.log("[DB] inserted minute:", teleInfo.device, moduleId, power, result);
+        console.log("[DB] inserted minute:", teleInfo.device, moduleId, power);
+
+          if (current > 0.05) {
+            const result2 = await dbUtility.setModuleStatus(moduleId, true);
+            console.log("[DB] set module status to ON for module", moduleId, result2);
+            const result3 = await dbUtility.setLastOnNow(moduleId);
+            console.log("[DB] set last_on to now for module", moduleId, result3);
+
+            const shouldSetLastOff = !(await dbUtility.getStatusChange(moduleId));
+            if (shouldSetLastOff) {
+              const result5 = await dbUtility.setLastOffNow(moduleId);
+              console.log("[DB] set last_off to now for module", moduleId, result5);
+              const result6 = await dbUtility.setStatusChange(moduleId, true);
+              console.log("[DB] set status change to true for module", moduleId, result6);
+            }
+          } 
       } catch (e) {
         console.error("[DB] insert failed:", e);
       }
@@ -132,7 +149,7 @@ export function startMqttIngest() {
       const state = msg.trim(); // "OFF" / "ON"
       //console.log(`[MQTT] relay state ${relayInfo.device} module ${relayInfo.moduleId}: ${state}`);
 
-      const result = await dbUtility.setModuleStatus(relayInfo.moduleId, state === "ON");
+      //const result = await dbUtility.setModuleStatus(relayInfo.moduleId, state === "ON");
       //console.log("[DB] set module status:", relayInfo.device, relayInfo.moduleId, state === "ON", result);
       return;
     }
@@ -147,6 +164,24 @@ export function startMqttIngest() {
   return client;
 }
 
+async function startModuleStatusWatchdog () {
+  //{"id":1,"module_id":1,"status":false,"last_on":"2026-02-13T21:00:40.551Z","last_off":"2026-02-13T21:01:05.514Z"}
+  setInterval(async () => {
+    const allStatus = await dbUtility.getAllModulesStatus();
+    allStatus.forEach(async (row: {id: number, module_id: number, status: boolean, last_on: string, last_off: string}) => {
+      const isStale = Date.now() - new Date(row.last_on).getTime() > 70_000;
+      if (row.status && isStale) {
+        await dbUtility.setModuleStatus(row.module_id, false);
+        await dbUtility.setLastOffNow(row.module_id);
+        await dbUtility.setStatusChange(row.module_id, false);
+        console.log(`[Watchdog] Set module ${row.module_id} OFF due to staleness. Last on: ${row.last_on}`);
+        
+      }
+    })
+  },  10 * 1000);
+}
+
+startModuleStatusWatchdog();
 startMqttIngest();
 
 app.use(express.static(path.join(__dirname, "../public")));
@@ -354,6 +389,11 @@ app.get("/api/forecastedData/years", async (req: Request, res: Response) => {
 })
 
 // HANDLE SWITCHING RELAYS API
+
+app.get("/api/switching/all", async (req: Request, res: Response) => {
+  dbUtility.getAllModulesStatus().then(data => res.json(data));
+})
+
 app.get("/api/switching/:moduleId/status", async (req: Request, res: Response) => {
   const module_id = req.params.moduleId as string;
   dbUtility.getModuleStatus(parseInt(module_id)).then(data => {

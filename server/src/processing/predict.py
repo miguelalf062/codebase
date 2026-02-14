@@ -77,6 +77,8 @@ def main():
     # [1,2,3,4] -> { "data": [1,2,3,4]}
 
     return { "data": forecast_list}
-
-result = main()
-print(json.dumps(result))
+try:  
+    result = main()
+    print(json.dumps(result))
+except Exception as e:
+    print(json.dumps({"data": []}))

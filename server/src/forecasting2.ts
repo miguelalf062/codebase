@@ -3,8 +3,7 @@
 // ============================
 
 import * as dbUtility from "./dbUtility";
-import { runForecastProcess } from "./forecasting"; // if you're in same file, remove this import
-
+import { runForecastProcess } from "./forecasting"; 
 function to2(x: number) {
   return Number(x.toFixed(2));
 }
