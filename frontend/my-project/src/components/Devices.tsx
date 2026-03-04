@@ -56,7 +56,22 @@ const Devices = () => {
   function toggleDeviceStatus(id: number, deviceStatus: boolean) {
     // Placeholder function to toggle device status
     console.log(`Toggling device ${id} ${deviceStatus}`);
-  }
+    console.log("Current devices data before toggle:", devicesData);
+    fetch(`/api/switching/${id}/${deviceStatus ? "ON" : "OFF"}`).then(async (res) => {
+      if (res.ok) {
+         try {
+        const res = await fetch("/api/dashboard/modules");
+        const modulesData: DevicesData[] = await res.json();        
+        setDevicesData(modulesData);
+        
+        } catch (err) {
+          console.error("Failed to fetch modules", err);
+        }
+      } else {
+        console.error(`Failed to toggle device ${id}`);
+      }
+  })
+}
 
   return (
     <div className="grid grid-cols-2 xl:grid-cols-3 xl:gap-10 gap-2 p-2">

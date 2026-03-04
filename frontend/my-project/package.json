@@ -4,12 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "deploy": "npm run build && rmdir /s /q ..\\..\\server\\public && mkdir ..\\..\\server\\public && xcopy dist ..\\..\\server\\public /E /I /Y && cd ..\\..\\server && npm run dev"
-  },
+  "dev": "vite --host",
+  "build": "tsc -b && vite build",
+  "lint": "eslint .",
+  "preview": "vite preview"
+},
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
     "react": "^19.2.0",

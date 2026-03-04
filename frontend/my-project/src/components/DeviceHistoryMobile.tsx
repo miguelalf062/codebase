@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DeviceHistoryGraph from "./DeviceHistoryGraph";
+import type { deviceStatus } from "./History";
 
 type dataset = { day: string; value: number };
 
@@ -106,7 +107,7 @@ type historyDeviceData = {
 //   },
 //     ];
 
-const DeviceHistoryMobile = ({historyDeviceDataSet} : {historyDeviceDataSet : historyDeviceData[]}) => {
+const DeviceHistoryMobile = ({historyDeviceDataSet, deviceStatuses} : {historyDeviceDataSet : historyDeviceData[], deviceStatuses: deviceStatus[]}) => {
     console.log(historyDeviceDataSet)
     
 
@@ -119,6 +120,52 @@ const DeviceHistoryMobile = ({historyDeviceDataSet} : {historyDeviceDataSet : hi
         setDeviceInfoShow(true);
         setShouldDisplayInfo(true);
     }
+
+     function findDeviceWithPortID(portId: number) : deviceStatus | undefined {
+            const status = deviceStatuses.find(status => status.module_id === portId);
+            return status
+        }
+    
+        function getLastActiveTime(portId: number | undefined) {
+            if (portId === undefined) return "Unknown";
+    
+            const deviceStatus = findDeviceWithPortID(portId);
+            if (!deviceStatus) return "Unknown";
+            const last_on = deviceStatus.last_on as string;
+            const last_off = deviceStatus.last_off as string;
+            const status = deviceStatus.status;
+            
+            
+            if (status) {
+                const diffMs = new Date(last_on).getTime() - new Date(last_off).getTime();
+                const diffMinutes = diffMs / (1000 * 60);
+    
+                if (diffMinutes < 60) {
+                    return `${diffMinutes.toFixed(0)} minutes`
+                } else if (diffMinutes < 60 * 24) {
+                    const diffHours = diffMinutes / 60;
+                    return `${diffHours.toFixed(0)} hours`
+                } else {
+                    const diffDays = diffMinutes / (60 * 24);
+                    return `${diffDays.toFixed(0)} days`
+                }
+            } else {
+                return "Currently Off"
+            }
+        }
+    
+        function formatTimestamp(iso: string | undefined) {
+            if (!iso) return "Never";
+            return new Date(iso).toLocaleString("en-US", {
+                month: "long",
+                day: "2-digit",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+            });
+        }
+
     return (
     <div className='w-full flex justify-center h-[1000px]'>
         <div className={`h-[100%] w-[90%] flex justify-center items-center ${shouldDisplayInfo ? "hidden" : "flex"}`}>
@@ -155,11 +202,11 @@ const DeviceHistoryMobile = ({historyDeviceDataSet} : {historyDeviceDataSet : hi
                             <div className="flex gap-5 w-[90%] mt-5 justify-center items-center">
                                 <div className="flex-1 h-[150px] flex-col flex rounded-xl justify-center items-center border-[#2E5E8A] border-1">
                                     <h1 className="text-center font-bold pt-5">Last Active</h1>
-                                    <h1 className="text-center pb-5">{currentDeviceData?.deviceLastMonitored}</h1>
+                                    <h1 className="text-center pb-5">{formatTimestamp(currentDeviceData?.deviceLastMonitored) || "Never"}</h1>
                                 </div>
                                 <div className="flex-1 h-[150px] flex-col flex rounded-xl justify-center items-center border-[#2E5E8A] border-1">
                                     <h1 className="text-center font-bold pt-5">Current Active Time</h1>
-                                    <h1 className="text-center pb-5">{currentDeviceData?.deviceCurrentActiveTime}</h1>
+                                    <h1 className="text-center pb-5">{getLastActiveTime(currentDeviceData?.portId)}</h1>
                                 </div>
                             </div>
                         </div>
@@ -171,15 +218,15 @@ const DeviceHistoryMobile = ({historyDeviceDataSet} : {historyDeviceDataSet : hi
                                     <div className="w-[95%] [&>*]:w-[250px] flex flex-col justify-center items-center gap-3">
                                         <div className="flex flex-col items-center justify-center border-[#2E5E8A] border-1 rounded-xl pt-5 pb-5 pr-5 pl-5">
                                             <h1 className="font-bold text-center">Daily Average</h1>
-                                            <h1 className="font-bold text-[25px]">{currentDeviceData?.dailyAverageUsage} hrs</h1>
+                                            <h1 className="font-bold text-[25px]">{currentDeviceData?.dailyAverageUsage?.toFixed(2) || 0} hrs</h1>
                                         </div>
                                         <div className="flex flex-col items-center justify-center border-[#2E5E8A] border-1 rounded-xl pt-5 pb-5 pr-5 pl-5">
                                             <h1 className="font-bold text-center">Monthly Average</h1>
-                                            <h1 className="font-bold text-[25px]">{currentDeviceData?.monthlyAverageUsage} hrs</h1>
+                                            <h1 className="font-bold text-[25px]">{currentDeviceData?.monthlyAverageUsage?.toFixed(2) || 0} hrs</h1>
                                         </div>
                                         <div className="flex flex-col items-center justify-center border-[#2E5E8A] border-1 rounded-xl pt-5 pb-5 pr-5 pl-5">
                                             <h1 className="font-bold text-center">Yearly Average</h1>
-                                            <h1 className="font-bold text-[25px]">{currentDeviceData?.yearlyAverageUsage} hrs</h1>
+                                            <h1 className="font-bold text-[25px]">{currentDeviceData?.yearlyAverageUsage?.toFixed(2) || 0} hrs</h1>
                                         </div>
                         
                                     </div>

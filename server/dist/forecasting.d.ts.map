@@ -1,0 +1,1 @@
+{"version":3,"file":"forecasting.d.ts","sourceRoot":"","sources":["../src/forecasting.ts"],"names":[],"mappings":"AAeA,KAAK,cAAc,GAAG;IACpB,IAAI,EAAE,MAAM,EAAE,CAAC;CAChB,CAAC;AAEF,wBAAsB,kBAAkB,CAAC,aAAa,EAAG,MAAM,EAAE,IAAI,EAAG,MAAM,EAAE,GAAI,OAAO,CAAC,cAAc,CAAC,CA6C1G;AAkCD,wBAAsB,SAAS,kBAG9B;AAED,wBAAsB,qBAAqB,CAAE,MAAM,EAAG,MAAM,iBAO3D;AAynBD,wBAAsB,wBAAwB,kBAuE7C"}

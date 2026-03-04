@@ -1,0 +1,23 @@
+{
+  "name": "codebase",
+  "version": "1.0.0",
+  "main": "index.js",
+ "scripts": {
+  "build:frontend": "cd frontend\\my-project && npm run build && rmdir /s /q ..\\..\\server\\public && mkdir ..\\..\\server\\public && xcopy dist ..\\..\\server\\public /E /I /Y",
+  "build:server": "cd server && npm run build",
+  "build": "npm run build:frontend && npm run build:server",
+  "deploy": "npm run build && scp -r server\\dist server\\public admin@192.168.1.71:~/app/server/ && ssh admin@192.168.1.71 \"pm2 reload server\""
+},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miguelalf062/codebase.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/miguelalf062/codebase/issues"
+  },
+  "homepage": "https://github.com/miguelalf062/codebase#readme",
+  "description": ""
+}

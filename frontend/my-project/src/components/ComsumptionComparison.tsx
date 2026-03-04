@@ -65,7 +65,7 @@ const ComsumptionComparison = ({currentConsumption = 42, yesterdayConsumption = 
         fontWeight="bold"
         fill="#F5B335"
       >
-        {Math.abs(yesterdayConsumption - currentConsumption)} kWh
+        {Math.abs(parseFloat((yesterdayConsumption - currentConsumption).toFixed(2)))} kWh
       </text>
       <text
         x="72.5%"

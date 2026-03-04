@@ -95,9 +95,9 @@ const History = () => {
           yearlyPowerConsumption: dataset.yearlyPowerConsumption,
           deviceLastMonitored: dataset.deviceLastOn || "Never",
           deviceCurrentActiveTime: `${dataset.deviceCurrentActiveTimeSec / 60} minutes`,
-          dailyAverageUsage: dataset.dailyPowerConsumption.reduce((sum, d) => sum + d.value, 0) / dataset.dailyPowerConsumption.length || 0,
-          weeklyAverageUsage: dataset.monthlyPowerConsumption.reduce((sum, d) => sum + d.value, 0) / dataset.monthlyPowerConsumption.length || 0,
-          monthlyAverageUsage: dataset.yearlyPowerConsumption.reduce((sum, d) => sum + d.value, 0) / dataset.yearlyPowerConsumption.length || 0
+          dailyAverageUsage: dataset.dailyPowerConsumption.filter(d => d.value > 0).length || 0,
+          weeklyAverageUsage: dataset.monthlyPowerConsumption.filter(d => d.value > 0).length || 0,
+          monthlyAverageUsage: dataset.yearlyPowerConsumption.filter(d => d.value > 0).length / dataset.yearlyPowerConsumption.length || 0
         }
       }));
     } catch (e) {
@@ -172,7 +172,7 @@ function yearMonthToText(ym: string) {
               <DeviceHistory historyDeviceDataSet={historyDeviceDataSet || []} deviceStatuses={moduleActiveTime || []} />
             </div>
             <div className="mt-[650px] block xl:hidden w-full flex justify-center h-[850px]">
-              <DeviceHistoryMobile historyDeviceDataSet={historyDeviceDataSet || []} />
+              <DeviceHistoryMobile historyDeviceDataSet={historyDeviceDataSet || []} deviceStatuses={moduleActiveTime || []}/>
             </div>
       </div>
     </div>

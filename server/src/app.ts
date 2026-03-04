@@ -30,7 +30,7 @@ const handlers : Record<Interval, () => Promise<dbResponse[]>>= {
 };
 
 //MQTT Client Setup
-const MQTT_URL = process.env.MQTT_URL ?? "mqtt://localhost:1883";
+const MQTT_URL = process.env.MQTT_URL ?? "mqtt://localhost:1883"; // "mqtt://localhost:1883" mqtt://192.168.1.50:1883
 const TELEMETRY_TOPIC = process.env.MQTT_TELEMETRY_TOPIC ?? "telemetry/#";
 
 

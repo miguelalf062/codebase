@@ -1,79 +1,154 @@
-import { timeStamp } from "console";
-import { pool } from "./db/index";
-
-export async function readModulesData() {
-  const res = await pool.query("SELECT * FROM modules");
-  return res.rows;
-}
-
-export async function getModuleIds(): Promise<number[]> {
-  const { rows } = await pool.query<{ id: number }>(`SELECT id FROM modules ORDER BY id ASC;`);
-  return rows.map((r) => r.id);
-}
-
-export async function readMinutesData() {
-  const res = await pool.query("SELECT * FROM module_data_minute");
-  return res.rows;
-}
-
-export async function readHoursData() {
-  const res = await pool.query("SELECT * FROM module_data_hourly");
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.readModulesData = readModulesData;
+exports.getModuleIds = getModuleIds;
+exports.readMinutesData = readMinutesData;
+exports.readHoursData = readHoursData;
+exports.readDailyData = readDailyData;
+exports.readWeeklyData = readWeeklyData;
+exports.readMonthlyData = readMonthlyData;
+exports.readYearlyData = readYearlyData;
+exports.writeMinutesData = writeMinutesData;
+exports.writeHourlyData = writeHourlyData;
+exports.writeDailyData = writeDailyData;
+exports.writeWeeklyData = writeWeeklyData;
+exports.writeMonthlyData = writeMonthlyData;
+exports.writeYearlyData = writeYearlyData;
+exports.writeForecastMinutesData = writeForecastMinutesData;
+exports.writeForecastWeeksData = writeForecastWeeksData;
+exports.writeForecastHoursData = writeForecastHoursData;
+exports.writeForecastDaysData = writeForecastDaysData;
+exports.writeForecastMonthsData = writeForecastMonthsData;
+exports.writeForecastYearsData = writeForecastYearsData;
+exports.deleteForecastHoursData = deleteForecastHoursData;
+exports.deleteForecastDaysData = deleteForecastDaysData;
+exports.deleteForecastWeeksData = deleteForecastWeeksData;
+exports.deleteForecastMonthsData = deleteForecastMonthsData;
+exports.deleteForecastYearsData = deleteForecastYearsData;
+exports.rollupHours = rollupHours;
+exports.rollupDays = rollupDays;
+exports.rollupWeeks = rollupWeeks;
+exports.rollupMonths = rollupMonths;
+exports.rollupYears = rollupYears;
+exports.shouldRun = shouldRun;
+exports.markRan = markRan;
+exports.fillMissingMinutesWithZeros = fillMissingMinutesWithZeros;
+exports.getLastUploadedMinuteData = getLastUploadedMinuteData;
+exports.getLast300Minutes = getLast300Minutes;
+exports.getLast140Hours = getLast140Hours;
+exports.getTodayHourlyData = getTodayHourlyData;
+exports.getYesterdayDailyData = getYesterdayDailyData;
+exports.getThisWeekData = getThisWeekData;
+exports.getThisWeekHourlyData = getThisWeekHourlyData;
+exports.getThisMonthHourlyData = getThisMonthHourlyData;
+exports.getThisMonthData = getThisMonthData;
+exports.getLastMonthData = getLastMonthData;
+exports.getLast14Weeks = getLast14Weeks;
+exports.getLast61Days = getLast61Days;
+exports.getLast14Days = getLast14Days;
+exports.getLast61Months = getLast61Months;
+exports.getLast24Months = getLast24Months;
+exports.getLast24Years = getLast24Years;
+exports.getForecastWindows = getForecastWindows;
+exports.getForecastedMinutes = getForecastedMinutes;
+exports.getForecastedHours = getForecastedHours;
+exports.getForecastedDays = getForecastedDays;
+exports.getForecastedWeeks = getForecastedWeeks;
+exports.getForecastedMonths = getForecastedMonths;
+exports.getForecastedYears = getForecastedYears;
+exports.getAllModulesStatus = getAllModulesStatus;
+exports.getModuleStatus = getModuleStatus;
+exports.setModuleStatus = setModuleStatus;
+exports.getModuleName = getModuleName;
+exports.setModuleName = setModuleName;
+exports.getDashboardModules = getDashboardModules;
+exports.getDashboardTotals = getDashboardTotals;
+exports.getModuleLast24Hours = getModuleLast24Hours;
+exports.getModuleLast30Days = getModuleLast30Days;
+exports.getModuleLast12Months = getModuleLast12Months;
+exports.getModuleLiveStatus = getModuleLiveStatus;
+exports.getDashboardFrontendData = getDashboardFrontendData;
+exports.getRemainingForecastHoursForToday = getRemainingForecastHoursForToday;
+exports.getTodayActualHours = getTodayActualHours;
+exports.getTodayActualAndRemainingForecast = getTodayActualAndRemainingForecast;
+exports.getForecastHours24 = getForecastHours24;
+exports.getForecastDaysWindow = getForecastDaysWindow;
+exports.getThisMonthTotals = getThisMonthTotals;
+exports.getForecastHours24_Limit = getForecastHours24_Limit;
+exports.getForecastDays7_Limit = getForecastDays7_Limit;
+exports.getForecastDays30_Limit = getForecastDays30_Limit;
+exports.getActualHours24 = getActualHours24;
+exports.getActualDays7 = getActualDays7;
+exports.getActualDays30 = getActualDays30;
+exports.getActualHours24_AllModules = getActualHours24_AllModules;
+exports.getActualDays7_AllModules = getActualDays7_AllModules;
+exports.getActualDays30_AllModules = getActualDays30_AllModules;
+exports.getForecastHours24_AllModules = getForecastHours24_AllModules;
+exports.getForecastDays7_AllModules = getForecastDays7_AllModules;
+exports.getForecastDays30_AllModules = getForecastDays30_AllModules;
+exports.setLastOnNow = setLastOnNow;
+exports.setLastOffNow = setLastOffNow;
+exports.setStatusChange = setStatusChange;
+exports.getStatusChange = getStatusChange;
+const index_1 = require("./db/index");
+async function readModulesData() {
+    const res = await index_1.pool.query("SELECT * FROM modules");
     return res.rows;
-
 }
-
-export async function readDailyData() {
-  const res = await pool.query("SELECT * FROM module_data_daily");
+async function getModuleIds() {
+    const { rows } = await index_1.pool.query(`SELECT id FROM modules ORDER BY id ASC;`);
+    return rows.map((r) => r.id);
+}
+async function readMinutesData() {
+    const res = await index_1.pool.query("SELECT * FROM module_data_minute");
     return res.rows;
 }
-
-export async function readWeeklyData() {
-  const res = await pool.query("SELECT * FROM module_data_weekly")
-  return res.rows;
-}
-
-export async function readMonthlyData() {
-  const res = await pool.query("SELECT * FROM module_data_monthly");
+async function readHoursData() {
+    const res = await index_1.pool.query("SELECT * FROM module_data_hourly");
     return res.rows;
 }
-
-export async function readYearlyData() {
-  const res = await pool.query("SELECT * FROM module_data_yearly");
+async function readDailyData() {
+    const res = await index_1.pool.query("SELECT * FROM module_data_daily");
     return res.rows;
 }
-
-export async function writeMinutesData(moduleID: number, current: number, voltage: number, power: number) {
-  const res = await pool.query(`INSERT INTO module_data_minute(module_id, current, voltage, power) VALUES(${moduleID}, ${current}, ${voltage}, ${power});`);
+async function readWeeklyData() {
+    const res = await index_1.pool.query("SELECT * FROM module_data_weekly");
+    return res.rows;
+}
+async function readMonthlyData() {
+    const res = await index_1.pool.query("SELECT * FROM module_data_monthly");
+    return res.rows;
+}
+async function readYearlyData() {
+    const res = await index_1.pool.query("SELECT * FROM module_data_yearly");
+    return res.rows;
+}
+async function writeMinutesData(moduleID, current, voltage, power) {
+    const res = await index_1.pool.query(`INSERT INTO module_data_minute(module_id, current, voltage, power) VALUES(${moduleID}, ${current}, ${voltage}, ${power});`);
     return res;
 }
-
-export async function writeHourlyData(moduleID: number, current: number, voltage: number, power: number) {
-  const res = await pool.query(`INSERT INTO module_data_minute(module_id, current, voltage, power) VALUES(${moduleID}, ${current}, ${voltage}, ${power});`);
+async function writeHourlyData(moduleID, current, voltage, power) {
+    const res = await index_1.pool.query(`INSERT INTO module_data_minute(module_id, current, voltage, power) VALUES(${moduleID}, ${current}, ${voltage}, ${power});`);
     return res;
 }
-
-export async function writeDailyData(moduleID: number, day: Date, avg_current: number, avg_voltage: number, total_power: number) {
-  const res = await pool.query(`INSERT INTO module_data_daily(module_id, day, avg_current, avg_voltage, total_power) VALUES(${moduleID}, ${day}, ${avg_current}, ${avg_voltage}, ${total_power});`);
+async function writeDailyData(moduleID, day, avg_current, avg_voltage, total_power) {
+    const res = await index_1.pool.query(`INSERT INTO module_data_daily(module_id, day, avg_current, avg_voltage, total_power) VALUES(${moduleID}, ${day}, ${avg_current}, ${avg_voltage}, ${total_power});`);
     return res;
 }
-
-export async function writeWeeklyData(moduleID: number, week_start: Date, avg_current: number, avg_voltage: number, total_power: number) {
-  const res = await pool.query(`INSERT INTO module_data_weekly(module_id, week_start, avg_current, avg_voltage, total_power) VALUES(${moduleID}, ${week_start}, ${avg_current}, ${avg_voltage}, ${total_power});`);
+async function writeWeeklyData(moduleID, week_start, avg_current, avg_voltage, total_power) {
+    const res = await index_1.pool.query(`INSERT INTO module_data_weekly(module_id, week_start, avg_current, avg_voltage, total_power) VALUES(${moduleID}, ${week_start}, ${avg_current}, ${avg_voltage}, ${total_power});`);
     return res;
 }
-
-export async function writeMonthlyData(moduleID: number, month_start: Date, avg_current: number, avg_voltage: number, total_power: number) {
-  const res = await pool.query(`INSERT INTO module_data_weekly(module_id, month_start, avg_current, avg_voltage, total_power) VALUES(${moduleID}, ${month_start}, ${avg_current}, ${avg_voltage}, ${total_power});`);
+async function writeMonthlyData(moduleID, month_start, avg_current, avg_voltage, total_power) {
+    const res = await index_1.pool.query(`INSERT INTO module_data_weekly(module_id, month_start, avg_current, avg_voltage, total_power) VALUES(${moduleID}, ${month_start}, ${avg_current}, ${avg_voltage}, ${total_power});`);
     return res;
 }
-
-export async function writeYearlyData(moduleID: number, year_start: Date, avg_current: number, avg_voltage: number, total_power: number) {
-  const res = await pool.query(`INSERT INTO module_data_weekly(module_id, year_start, avg_current, avg_voltage, total_power) VALUES(${moduleID}, ${year_start}, ${avg_current}, ${avg_voltage}, ${total_power});`);
+async function writeYearlyData(moduleID, year_start, avg_current, avg_voltage, total_power) {
+    const res = await index_1.pool.query(`INSERT INTO module_data_weekly(module_id, year_start, avg_current, avg_voltage, total_power) VALUES(${moduleID}, ${year_start}, ${avg_current}, ${avg_voltage}, ${total_power});`);
     return res;
 }
-
-export async function writeForecastMinutesData(moduleID: number, minute: number, current: number, voltage: number, power: number) {
-  const res = await pool.query(`INSERT INTO forecast_data_minutes(module_id, minute, current, voltage, power) VALUES(${moduleID}, ${minute}, ${current}, ${voltage}, ${power});`);
+async function writeForecastMinutesData(moduleID, minute, current, voltage, power) {
+    const res = await index_1.pool.query(`INSERT INTO forecast_data_minutes(module_id, minute, current, voltage, power) VALUES(${moduleID}, ${minute}, ${current}, ${voltage}, ${power});`);
     return res;
 }
 // export async function writeForecastHoursData(moduleID: number, hour: number, current: number, voltage: number, power: number) {
@@ -84,8 +159,8 @@ export async function writeForecastMinutesData(moduleID: number, minute: number,
 //   const res = await pool.query(`INSERT INTO forecast_data_days(module_id, day, current, voltage, power) VALUES(${moduleID}, ${day}, ${current}, ${voltage}, ${power});`);
 //     return res;
 // }
-export async function writeForecastWeeksData(moduleID: number, week: number, current: number, voltage: number, power: number) {
-  const res = await pool.query(`INSERT INTO forecast_data_weeks(module_id, week, current, voltage, power) VALUES(${moduleID}, ${week}, ${current}, ${voltage}, ${power});`);
+async function writeForecastWeeksData(moduleID, week, current, voltage, power) {
+    const res = await index_1.pool.query(`INSERT INTO forecast_data_weeks(module_id, week, current, voltage, power) VALUES(${moduleID}, ${week}, ${current}, ${voltage}, ${power});`);
     return res;
 }
 // export async function writeForecastMonthsData(moduleID: number, month: number, current: number, voltage: number, power: number) {
@@ -96,99 +171,52 @@ export async function writeForecastWeeksData(moduleID: number, week: number, cur
 //   const res = await pool.query(`INSERT INTO forecast_data_years(module_id, year, current, voltage, power) VALUES(${moduleID}, ${year}, ${current}, ${voltage}, ${power});`);
 //     return res;
 // }
-
-export async function writeForecastHoursData(
-  moduleID: number,
-  hour: number,
-  current: number,
-  voltage: number,
-  power: number
-) {
-  return pool.query(
-    `
+async function writeForecastHoursData(moduleID, hour, current, voltage, power) {
+    return index_1.pool.query(`
     INSERT INTO forecast_data_hours(module_id, hour, current, voltage, power, forecast_timestamp)
     VALUES ($1, $2, $3, $4, $5, NOW());
-    `,
-    [moduleID, hour, current, voltage, power]
-  );
+    `, [moduleID, hour, current, voltage, power]);
 }
-
-export async function writeForecastDaysData(
-  moduleID: number,
-  day: number,
-  current: number,
-  voltage: number,
-  power: number
-) {
-  return pool.query(
-    `
+async function writeForecastDaysData(moduleID, day, current, voltage, power) {
+    return index_1.pool.query(`
     INSERT INTO forecast_data_days(module_id, day, current, voltage, power, forecast_timestamp)
     VALUES ($1, $2, $3, $4, $5, NOW());
-    `,
-    [moduleID, day, current, voltage, power]
-  );
+    `, [moduleID, day, current, voltage, power]);
 }
-
-export async function writeForecastMonthsData(
-  moduleID: number,
-  month: number,
-  current: number,
-  voltage: number,
-  power: number
-) {
-  return pool.query(
-    `
+async function writeForecastMonthsData(moduleID, month, current, voltage, power) {
+    return index_1.pool.query(`
     INSERT INTO forecast_data_months(module_id, month, current, voltage, power, forecast_timestamp)
     VALUES ($1, $2, $3, $4, $5, NOW());
-    `,
-    [moduleID, month, current, voltage, power]
-  );
+    `, [moduleID, month, current, voltage, power]);
 }
-
-export async function writeForecastYearsData(
-  moduleID: number,
-  year: number,
-  current: number,
-  voltage: number,
-  power: number
-) {
-  return pool.query(
-    `
+async function writeForecastYearsData(moduleID, year, current, voltage, power) {
+    return index_1.pool.query(`
     INSERT INTO forecast_data_years(module_id, year, current, voltage, power, forecast_timestamp)
     VALUES ($1, $2, $3, $4, $5, NOW());
-    `,
-    [moduleID, year, current, voltage, power]
-  );
+    `, [moduleID, year, current, voltage, power]);
 }
-
-export async function deleteForecastHoursData() {
-  const res = await pool.query(`DELETE FROM forecast_data_hours`);
-  return res;
+async function deleteForecastHoursData() {
+    const res = await index_1.pool.query(`DELETE FROM forecast_data_hours`);
+    return res;
 }
-
-export async function deleteForecastDaysData() {
-  const res = await pool.query(`DELETE FROM forecast_data_days`);
-  return res;
+async function deleteForecastDaysData() {
+    const res = await index_1.pool.query(`DELETE FROM forecast_data_days`);
+    return res;
 }
-
-export async function deleteForecastWeeksData() {
-  const res = await pool.query(`DELETE FROM forecast_data_weeks`);
-  return res;
+async function deleteForecastWeeksData() {
+    const res = await index_1.pool.query(`DELETE FROM forecast_data_weeks`);
+    return res;
 }
-
-export async function deleteForecastMonthsData() {
-  const res = await pool.query(`DELETE FROM forecast_data_hours`);
-  return res;
+async function deleteForecastMonthsData() {
+    const res = await index_1.pool.query(`DELETE FROM forecast_data_hours`);
+    return res;
 }
-
-export async function deleteForecastYearsData() {
-  const res = await pool.query(`DELETE FROM forecast_data_years`);
-  return res;
+async function deleteForecastYearsData() {
+    const res = await index_1.pool.query(`DELETE FROM forecast_data_years`);
+    return res;
 }
-
-
-export async function rollupHours() {
-  await pool.query(`
+async function rollupHours() {
+    await index_1.pool.query(`
     INSERT INTO module_data_hourly (
       module_id,
       hour_start,
@@ -212,13 +240,12 @@ export async function rollupHours() {
       total_power = EXCLUDED.total_power;
   `);
 }
-
 /**
  * Daily rollup -> module_data_daily
  * PK: (module_id, day) date
  */
-export async function rollupDays() {
-  await pool.query(`
+async function rollupDays() {
+    await index_1.pool.query(`
     INSERT INTO module_data_daily (
       module_id,
       day,
@@ -242,14 +269,13 @@ export async function rollupDays() {
       total_power = EXCLUDED.total_power;
   `);
 }
-
 /**
  * Weekly rollup -> module_data_weekly
  * PK: (module_id, week_start) date
  * Postgres week startimestamp Monday
  */
-export async function rollupWeeks() {
-  await pool.query(`
+async function rollupWeeks() {
+    await index_1.pool.query(`
     INSERT INTO module_data_weekly (
       module_id,
       week_start,
@@ -273,13 +299,12 @@ export async function rollupWeeks() {
       total_power = EXCLUDED.total_power;
   `);
 }
-
 /**
  * Monthly rollup -> module_data_monthly
  * PK: (module_id, month_start) date
  */
-export async function rollupMonths() {
-  await pool.query(`
+async function rollupMonths() {
+    await index_1.pool.query(`
     INSERT INTO module_data_monthly (
       module_id,
       month_start,
@@ -303,13 +328,12 @@ export async function rollupMonths() {
       total_power = EXCLUDED.total_power;
   `);
 }
-
 /**
  * Yearly rollup -> module_data_yearly
  * PK: (module_id, year_start) date
  */
-export async function rollupYears() {
-  await pool.query(`
+async function rollupYears() {
+    await index_1.pool.query(`
     INSERT INTO module_data_yearly (
       module_id,
       year_start,
@@ -333,12 +357,8 @@ export async function rollupYears() {
       total_power = EXCLUDED.total_power;
   `);
 }
-
-type Unit = "hour" | "day" | "week" | "month" | "year";
-
-export async function shouldRun(jobName: string, unit: Unit): Promise<{ run: boolean; bucketStart: string }> {
-  const result = await pool.query<{ run: boolean; latest_done: string }>(
-    `
+async function shouldRun(jobName, unit) {
+    const result = await index_1.pool.query(`
     WITH latest AS (
       SELECT (date_trunc($1, now()) - ('1 ' || $1)::interval) AS latest_done
     ),
@@ -353,36 +373,27 @@ export async function shouldRun(jobName: string, unit: Unit): Promise<{ run: boo
         (SELECT last_done FROM prev) IS DISTINCT FROM (SELECT latest_done FROM latest),
         true
       ) AS run;
-    `,
-    [unit, jobName]
-  );
-
-  const row = result.rows[0];
-  if (!row) {
-    // Should basically never happen, but keeps TS + runtime safe
-    return { run: false, bucketStart: new Date().toISOString() };
-  }
-
-  return {
-    run: row.run,
-    bucketStart: row.latest_done,
-  };
+    `, [unit, jobName]);
+    const row = result.rows[0];
+    if (!row) {
+        // Should basically never happen, but keeps TS + runtime safe
+        return { run: false, bucketStart: new Date().toISOString() };
+    }
+    return {
+        run: row.run,
+        bucketStart: row.latest_done,
+    };
 }
-
-export async function markRan(jobName: string, bucketStart: string) {
-  await pool.query(
-    `
+async function markRan(jobName, bucketStart) {
+    await index_1.pool.query(`
     INSERT INTO prediction_runs (job_name, last_bucket_start)
     VALUES ($1, $2::timestamptz)
     ON CONFLICT (job_name)
     DO UPDATE SET last_bucket_start = EXCLUDED.last_bucket_start;
-    `,
-    [jobName, bucketStart]
-  );
+    `, [jobName, bucketStart]);
 }
-
-export async function fillMissingMinutesWithZeros() {
-  await pool.query(`
+async function fillMissingMinutesWithZeros() {
+    await index_1.pool.query(`
     WITH last_seen AS (
       SELECT
         m.id AS module_id,
@@ -423,379 +434,226 @@ export async function fillMissingMinutesWithZeros() {
     ON CONFLICT (module_id, "timestamp") DO NOTHING;
   `);
 }
-
-export type MinuteRow = {
-  module_id: number;
-  current: string;   // pg numeric comes back as string unless you set parsers
-  voltage: string;
-  power: string;
-  timestamp: string; // timestamptz -> string in JS
-};
-
-export type HourlyRow = {
-  module_id: number;
-  hour_start: string;   // timestamp/timestamptz -> string
-  avg_current: string;
-  avg_voltage: string;
-  total_power: string;
-};
-
-export type DailyRow = {
-  module_id: number;
-  day: string;          // date -> string (YYYY-MM-DD)
-  avg_current: string;
-  avg_voltage: string;
-  total_power: string;
-};
-
-export type WeeklyRow = {
-  module_id: number;
-  week_start: string;   // date -> string
-  avg_current: string;
-  avg_voltage: string;
-  total_power: string;
-};
-
-export type MonthlyRow = {
-  module_id: number;
-  month_start: string;  // date -> string
-  avg_current: string;
-  avg_voltage: string;
-  total_power: string;
-};
-
-export type YearlyRow = {
-  module_id: number;
-  year_start: string;   // date -> string
-  avg_current: string;
-  avg_voltage: string;
-  total_power: string;
-};
-export async function getLastUploadedMinuteData(moduleId: string) {
-  const { rows } = await pool.query<MinuteRow>(
-    `
+async function getLastUploadedMinuteData(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, current, voltage, power, timestamp
     FROM module_data_minute
     WHERE module_id = $1
     ORDER BY timestamp DESC
     LIMIT 1;
-    `,
-    [moduleId]
-  );
-
-  return rows[0] ?? null;
+    `, [moduleId]);
+    return rows[0] ?? null;
 }
-
-
-export async function getLast300Minutes(moduleId: number): Promise<MinuteRow[]> {
-  const { rows } = await pool.query<MinuteRow>(
-    `
+async function getLast300Minutes(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, current, voltage, power, "timestamp" AS timestamp
     FROM module_data_minute
     WHERE module_id = $1
     ORDER BY "timestamp" DESC
     LIMIT 300;
-    `,
-    [moduleId]
-  );
-
-  return rows.reverse();
+    `, [moduleId]);
+    return rows.reverse();
 }
-
-export async function getLast140Hours(moduleId: number): Promise<HourlyRow[]> {
-  const { rows } = await pool.query<HourlyRow>(
-    `
+async function getLast140Hours(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, hour_start, avg_current, avg_voltage, total_power
     FROM module_data_hourly
     WHERE module_id = $1
     ORDER BY hour_start DESC
     LIMIT 140;
-    `,
-    [moduleId]
-  );
-
-  return rows.reverse();
+    `, [moduleId]);
+    return rows.reverse();
 }
-
-export async function getTodayHourlyData() {
-  const { rows } = await pool.query<HourlyRow>(
-    `
+async function getTodayHourlyData() {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, hour_start, avg_current, avg_voltage, total_power
     FROM module_data_hourly
     WHERE hour_start >= date_trunc('day', NOW())
       AND hour_start <  date_trunc('day', NOW()) + INTERVAL '1 day'
     ORDER BY hour_start ASC;
-    `
-  );
-  return rows;
+    `);
+    return rows;
 }
-
-export async function getYesterdayDailyData() {
-  const { rows } = await pool.query<DailyRow>(
-    `
+async function getYesterdayDailyData() {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, day, avg_current, avg_voltage, total_power
     FROM module_data_daily
     WHERE day = date_trunc('day', NOW()) - INTERVAL '1 day'
     ORDER BY module_id;
-    `
-  );
-
-  return rows;
+    `);
+    return rows;
 }
-
-export async function getThisWeekData() {
-  const { rows } = await pool.query(
-    `
+async function getThisWeekData() {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, week_start, avg_current, avg_voltage, total_power
     FROM module_data_weekly
     WHERE week_start >= date_trunc('week', NOW())
       AND week_start <  date_trunc('week', NOW()) + INTERVAL '1 week'
     ORDER BY week_start ASC;
-    `
-  );
-  return rows;
+    `);
+    return rows;
 }
-
-export async function getThisWeekHourlyData() {
-  const { rows } = await pool.query<HourlyRow>(
-    `
+async function getThisWeekHourlyData() {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, hour_start, avg_current, avg_voltage, total_power
     FROM module_data_hourly
     WHERE hour_start >= date_trunc('week', NOW())
       AND hour_start <  date_trunc('week', NOW()) + INTERVAL '1 week'
     ORDER BY hour_start ASC;
-    `
-  );
-
-  return rows;
+    `);
+    return rows;
 }
-
-export async function getThisMonthHourlyData() {
-  const { rows } = await pool.query<HourlyRow>(
-    `
+async function getThisMonthHourlyData() {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, hour_start, avg_current, avg_voltage, total_power
     FROM module_data_hourly
     WHERE hour_start >= date_trunc('month', NOW())
       AND hour_start <  date_trunc('month', NOW()) + INTERVAL '1 month'
     ORDER BY hour_start ASC;
-    `
-  );
-
-  return rows;
+    `);
+    return rows;
 }
-
-export async function getThisMonthData() {
-  const { rows } = await pool.query(
-    `
+async function getThisMonthData() {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, month_start, avg_current, avg_voltage, total_power
     FROM module_data_monthly
     WHERE month_start >= date_trunc('month', NOW())
       AND month_start <  date_trunc('month', NOW()) + INTERVAL '1 month'
     ORDER BY month_start ASC;
-    `
-  );
-  return rows;
+    `);
+    return rows;
 }
-
-export async function getLastMonthData() {
-  const { rows } = await pool.query<MonthlyRow>(
-    `
+async function getLastMonthData() {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, month_start, avg_current, avg_voltage, total_power
     FROM module_data_monthly
     WHERE month_start >= date_trunc('month', NOW()) - INTERVAL '1 month'
       AND month_start <  date_trunc('month', NOW())
     ORDER BY module_id;
-    `
-  );
-
-  return rows;
+    `);
+    return rows;
 }
-
-export async function getLast14Weeks(moduleId: number): Promise<WeeklyRow[]> {
-  const { rows } = await pool.query<WeeklyRow>(
-    `
+async function getLast14Weeks(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, week_start, avg_current, avg_voltage, total_power
     FROM module_data_weekly
     WHERE module_id = $1
     ORDER BY week_start DESC
     LIMIT 14;
-    `,
-    [moduleId]
-  );
-
-  return rows.reverse();
+    `, [moduleId]);
+    return rows.reverse();
 }
-
-export async function getLast61Days(moduleId: number) {
-  const { rows } = await pool.query<{
-    module_id: number;
-    day: string;          // DATE -> 'YYYY-MM-DD'
-    avg_current: string;
-    avg_voltage: string;
-    total_power: string;
-  }>(
-    `
+async function getLast61Days(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, day, avg_current, avg_voltage, total_power
     FROM module_data_daily
     WHERE module_id = $1
     ORDER BY day DESC
     LIMIT 61;
-    `,
-    [moduleId]
-  );
-
-  return rows.reverse();
+    `, [moduleId]);
+    return rows.reverse();
 }
-
-export async function getLast14Days(moduleId: number) {
-  const { rows } = await pool.query<{
-    module_id: number;
-    day: string;          // DATE -> 'YYYY-MM-DD'
-    avg_current: string;
-    avg_voltage: string;
-    total_power: string;
-  }>(
-    `
+async function getLast14Days(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, day, avg_current, avg_voltage, total_power
     FROM module_data_daily
     WHERE module_id = $1
     ORDER BY day DESC
     LIMIT 14;
-    `,
-    [moduleId]
-  );
-
-  return rows.reverse();
+    `, [moduleId]);
+    return rows.reverse();
 }
-
-export async function getLast61Months(moduleId: number): Promise<MonthlyRow[]> {
-  const { rows } = await pool.query<MonthlyRow>(
-    `
+async function getLast61Months(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, month_start, avg_current, avg_voltage, total_power
     FROM module_data_monthly
     WHERE module_id = $1
     ORDER BY month_start DESC
     LIMIT 61;
-    `,
-    [moduleId]
-  );
-
-  return rows.reverse();
+    `, [moduleId]);
+    return rows.reverse();
 }
-
-export async function getLast24Months(moduleId: number): Promise<MonthlyRow[]> {
-  const { rows } = await pool.query<MonthlyRow>(
-    `
+async function getLast24Months(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, month_start, avg_current, avg_voltage, total_power
     FROM module_data_monthly
     WHERE module_id = $1
     ORDER BY month_start DESC
     LIMIT 24;
-    `,
-    [moduleId]
-  );
-
-  return rows.reverse();
+    `, [moduleId]);
+    return rows.reverse();
 }
-
-export async function getLast24Years(moduleId: number): Promise<YearlyRow[]> {
-  const { rows } = await pool.query<YearlyRow>(
-    `
+async function getLast24Years(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, year_start, avg_current, avg_voltage, total_power
     FROM module_data_yearly
     WHERE module_id = $1
     ORDER BY year_start DESC
     LIMIT 24;
-    `,
-    [moduleId]
-  );
-
-  return rows.reverse();
+    `, [moduleId]);
+    return rows.reverse();
 }
-
-export async function getForecastWindows(moduleId: number) {
-  const [minutes300, hours140, weeks14, months61, years24] = await Promise.all([
-    getLast300Minutes(moduleId),
-    getLast140Hours(moduleId),
-    getLast14Weeks(moduleId),
-    getLast61Months(moduleId),
-    getLast24Years(moduleId),
-  ]);
-
-  return { minutes300, hours140, weeks14, months61, years24 };
+async function getForecastWindows(moduleId) {
+    const [minutes300, hours140, weeks14, months61, years24] = await Promise.all([
+        getLast300Minutes(moduleId),
+        getLast140Hours(moduleId),
+        getLast14Weeks(moduleId),
+        getLast61Months(moduleId),
+        getLast24Years(moduleId),
+    ]);
+    return { minutes300, hours140, weeks14, months61, years24 };
 }
-
-export async function getForecastedMinutes() {
-  const res = await pool.query("SELECT * FROM forecast_data_minutes");
-  return res.rows;
+async function getForecastedMinutes() {
+    const res = await index_1.pool.query("SELECT * FROM forecast_data_minutes");
+    return res.rows;
 }
-
-export async function getForecastedHours() {
-  const res = await pool.query("SELECT * FROM forecast_data_hours");
-  return res.rows;
+async function getForecastedHours() {
+    const res = await index_1.pool.query("SELECT * FROM forecast_data_hours");
+    return res.rows;
 }
-
-export async function getForecastedDays() {
-  const res = await pool.query("SELECT * FROM forecast_data_days");
-  return res.rows;
+async function getForecastedDays() {
+    const res = await index_1.pool.query("SELECT * FROM forecast_data_days");
+    return res.rows;
 }
-
-export async function getForecastedWeeks() {
-  const res = await pool.query("SELECT * FROM forecast_data_weeks");
-  return res.rows;
+async function getForecastedWeeks() {
+    const res = await index_1.pool.query("SELECT * FROM forecast_data_weeks");
+    return res.rows;
 }
-
-export async function getForecastedMonths() {
-  const res = await pool.query("SELECT * FROM forecast_data_months");
-  return res.rows;
+async function getForecastedMonths() {
+    const res = await index_1.pool.query("SELECT * FROM forecast_data_months");
+    return res.rows;
 }
-
-export async function getForecastedYears() {
-  const res = await pool.query("SELECT * FROM forecast_data_years");
-  return res.rows;
+async function getForecastedYears() {
+    const res = await index_1.pool.query("SELECT * FROM forecast_data_years");
+    return res.rows;
 }
-
-export async function getAllModulesStatus() {
-  const res = await pool.query(`SELECT * FROM switching_data`);
-  return res.rows;
+async function getAllModulesStatus() {
+    const res = await index_1.pool.query(`SELECT * FROM switching_data`);
+    return res.rows;
 }
-
-export async function getModuleStatus(module_id : number) { 
-  const res = await pool.query(`SELECT * FROM switching_data WHERE module_id=${module_id}`)
-  return res.rows[0];
+async function getModuleStatus(module_id) {
+    const res = await index_1.pool.query(`SELECT * FROM switching_data WHERE module_id=${module_id}`);
+    return res.rows[0];
 }
-
-export async function setModuleStatus(module_id: number, status: boolean) {
-  if (status) {
-    await pool.query(`UPDATE switching_data SET status=TRUE, last_on=now() WHERE module_id=${module_id}`);
-  } else {
-    await pool.query(`UPDATE switching_data SET status=FALSE, last_off=now() WHERE module_id=${module_id}`);
-  }
+async function setModuleStatus(module_id, status) {
+    if (status) {
+        await index_1.pool.query(`UPDATE switching_data SET status=TRUE, last_on=now() WHERE module_id=${module_id}`);
+    }
+    else {
+        await index_1.pool.query(`UPDATE switching_data SET status=FALSE, last_off=now() WHERE module_id=${module_id}`);
+    }
 }
-
-export async function getModuleName(module_id : number) { 
-  const res = await pool.query(`SELECT * FROM naming_data WHERE module_id=${module_id}`)
-  return res.rows[0];
+async function getModuleName(module_id) {
+    const res = await index_1.pool.query(`SELECT * FROM naming_data WHERE module_id=${module_id}`);
+    return res.rows[0];
 }
-
-export async function setModuleName(module_id : number, newName : string) {
-  await pool.query(`UPDATE naming_data SET past_module = module_name WHERE module_id=${module_id}`).then(async data => {
-    await pool.query(`UPDATE naming_data SET module_name = ${newName} WHERE module_id=${module_id}`)
-  })
+async function setModuleName(module_id, newName) {
+    await index_1.pool.query(`UPDATE naming_data SET past_module = module_name WHERE module_id=${module_id}`).then(async (data) => {
+        await index_1.pool.query(`UPDATE naming_data SET module_name = ${newName} WHERE module_id=${module_id}`);
+    });
 }
-
-type DashboardModuleRow = {
-  module_id: number;
-  module_name: string | null;
-  status: boolean | null;
-  current: string | number | null;
-  voltage: string | number | null;
-  power: string | number | null;
-  timestamp: string;
-};
-
-export async function getDashboardModules() {
-  const { rows } = await pool.query<DashboardModuleRow>(`
+async function getDashboardModules() {
+    const { rows } = await index_1.pool.query(`
     WITH latest AS (
       SELECT DISTINCT ON (m.module_id)
         m.module_id,
@@ -830,49 +688,21 @@ export async function getDashboardModules() {
       ON s.module_id = ids.module_id
     ORDER BY ids.module_id ASC;
   `);
-
-  return rows.map((x) => ({
-    id: x.module_id,
-    name: x.module_name ?? `Module ${x.module_id}`,
-    status: x.status ?? false,
-    current: Number(x.current ?? 0),
-    voltage: Number(x.voltage ?? 0),
-    power: Number(x.power ?? 0),
-    timeStamp: x.timestamp,
-  }));
+    return rows.map((x) => ({
+        id: x.module_id,
+        name: x.module_name ?? `Module ${x.module_id}`,
+        status: x.status ?? false,
+        current: Number(x.current ?? 0),
+        voltage: Number(x.voltage ?? 0),
+        power: Number(x.power ?? 0),
+        timeStamp: x.timestamp,
+    }));
 }
-
-export type Dataset = { day: string; value: number };
-
-export type DashboardTotals = {
-  last30DaysTotal: Dataset[];
-  highestUsageMonth: { month: string; value: number } | null;
-  lowestUsageMonth: { month: string; value: number } | null;
-  avgPerDay: number;
-  avgPerMonth: number;
-  lastMonthTotal: number;
-  thisMonthTotal: number;
-};
-
-export type ModuleFrontendPack = {
-  module_id: number;
-  deviceName: string;
-
-  dailyPowerConsumption: Dataset[];   // 24 points (hours)
-  monthlyPowerConsumption: Dataset[]; // 30 points (days)
-  yearlyPowerConsumption: Dataset[];  // 12 points (months)
-
-  deviceLastOn: string | null;
-  isCurrentlyOn: boolean;
-  deviceCurrentActiveTimeSec: number;
-};
-
-function toNumber(x: any) {
-  return x == null ? 0 : Number(x);
+function toNumber(x) {
+    return x == null ? 0 : Number(x);
 }
-
-export async function getDashboardTotals(): Promise<DashboardTotals> {
-  const q = `
+async function getDashboardTotals() {
+    const q = `
     WITH
     d30 AS (
       SELECT
@@ -911,24 +741,20 @@ export async function getDashboardTotals(): Promise<DashboardTotals> {
       (SELECT value FROM this_m) AS this_month_total
     ;
   `;
-
-  const { rows } = await pool.query(q);
-  const r = rows[0];
-
-  return {
-    last30DaysTotal: (r.last30 ?? []) as Dataset[],
-    highestUsageMonth: r.highest ?? null,
-    lowestUsageMonth: r.lowest ?? null,
-    avgPerDay: toNumber(r.avg_day),
-    avgPerMonth: toNumber(r.avg_month),
-    lastMonthTotal: toNumber(r.last_month_total),
-    thisMonthTotal: toNumber(r.this_month_total),
-  };
+    const { rows } = await index_1.pool.query(q);
+    const r = rows[0];
+    return {
+        last30DaysTotal: (r.last30 ?? []),
+        highestUsageMonth: r.highest ?? null,
+        lowestUsageMonth: r.lowest ?? null,
+        avgPerDay: toNumber(r.avg_day),
+        avgPerMonth: toNumber(r.avg_month),
+        lastMonthTotal: toNumber(r.last_month_total),
+        thisMonthTotal: toNumber(r.this_month_total),
+    };
 }
-
-export async function getModuleLast24Hours(moduleId: number): Promise<Dataset[]> {
-  const { rows } = await pool.query(
-    `
+async function getModuleLast24Hours(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT
       to_char(hour_start, 'MM-DD HH24:00') AS day,
       COALESCE(total_power, 0)::numeric(14,2) AS value
@@ -936,16 +762,11 @@ export async function getModuleLast24Hours(moduleId: number): Promise<Dataset[]>
     WHERE module_id = $1
       AND hour_start >= (date_trunc('hour', now()) - interval '23 hours')
     ORDER BY hour_start ASC;
-    `,
-    [moduleId]
-  );
-
-  return rows.map((r) => ({ day: r.day, value: toNumber(r.value) }));
+    `, [moduleId]);
+    return rows.map((r) => ({ day: r.day, value: toNumber(r.value) }));
 }
-
-export async function getModuleLast30Days(moduleId: number): Promise<Dataset[]> {
-  const { rows } = await pool.query(
-    `
+async function getModuleLast30Days(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT
       to_char(day::date, 'YYYY-MM-DD') AS day,
       COALESCE(total_power, 0)::numeric(14,2) AS value
@@ -953,16 +774,11 @@ export async function getModuleLast30Days(moduleId: number): Promise<Dataset[]> 
     WHERE module_id = $1
       AND day >= (date_trunc('day', now())::date - interval '29 days')
     ORDER BY day ASC;
-    `,
-    [moduleId]
-  );
-
-  return rows.map((r) => ({ day: r.day, value: toNumber(r.value) }));
+    `, [moduleId]);
+    return rows.map((r) => ({ day: r.day, value: toNumber(r.value) }));
 }
-
-export async function getModuleLast12Months(moduleId: number): Promise<Dataset[]> {
-  const { rows } = await pool.query(
-    `
+async function getModuleLast12Months(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT
       to_char(month_start::date, 'YYYY-MM') AS day,
       COALESCE(total_power, 0)::numeric(14,2) AS value
@@ -970,90 +786,60 @@ export async function getModuleLast12Months(moduleId: number): Promise<Dataset[]
     WHERE module_id = $1
       AND month_start >= (date_trunc('month', now())::date - interval '11 months')
     ORDER BY month_start ASC;
-    `,
-    [moduleId]
-  );
-
-  return rows.map((r) => ({ day: r.day, value: toNumber(r.value) }));
+    `, [moduleId]);
+    return rows.map((r) => ({ day: r.day, value: toNumber(r.value) }));
 }
-
-export async function getModuleLiveStatus(moduleId: number): Promise<{
-  deviceLastOn: string | null;
-  isCurrentlyOn: boolean;
-  deviceCurrentActiveTimeSec: number;
-}> {
-  const { rows } = await pool.query(
-    `
+async function getModuleLiveStatus(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, status, last_on, last_off
     FROM switching_data
     WHERE module_id = $1
     LIMIT 1;
-    `,
-    [moduleId]
-  );
-
-  const r = rows[0];
-  if (!r) {
-    return { deviceLastOn: null, isCurrentlyOn: false, deviceCurrentActiveTimeSec: 0 };
-  }
-
-  // If status=TRUE, active time = now - last_on. Else 0.
-  const activeRes = await pool.query(
-    `
+    `, [moduleId]);
+    const r = rows[0];
+    if (!r) {
+        return { deviceLastOn: null, isCurrentlyOn: false, deviceCurrentActiveTimeSec: 0 };
+    }
+    // If status=TRUE, active time = now - last_on. Else 0.
+    const activeRes = await index_1.pool.query(`
     SELECT
       CASE
         WHEN $2::boolean = true AND $1::timestamptz IS NOT NULL
         THEN EXTRACT(EPOCH FROM (now() - $1::timestamptz))::bigint
         ELSE 0
       END AS active_sec
-    `,
-    [r.last_on, r.status]
-  );
-
-  return {
-    deviceLastOn: r.last_on ? new Date(r.last_on).toISOString() : null,
-    isCurrentlyOn: Boolean(r.status),
-    deviceCurrentActiveTimeSec: Number(activeRes.rows[0]?.active_sec ?? 0),
-  };
+    `, [r.last_on, r.status]);
+    return {
+        deviceLastOn: r.last_on ? new Date(r.last_on).toISOString() : null,
+        isCurrentlyOn: Boolean(r.status),
+        deviceCurrentActiveTimeSec: Number(activeRes.rows[0]?.active_sec ?? 0),
+    };
 }
-export async function getDashboardFrontendData(): Promise<{
-  totals: DashboardTotals;
-  modules: ModuleFrontendPack[];
-}> {
-  const totals = await getDashboardTotals();
-
-  const { rows: mods } = await pool.query<{ id: number; name: string }>(
-    `SELECT id, name FROM modules ORDER BY id ASC;`
-  );
-
-  const modules = await Promise.all(
-    mods.map(async (m) => {
-      const [d24, d30, m12, st] = await Promise.all([
-        getModuleLast24Hours(m.id),
-        getModuleLast30Days(m.id),
-        getModuleLast12Months(m.id),
-        getModuleLiveStatus(m.id),
-      ]);
-
-      return {
-        module_id: m.id,
-        deviceName: m.name,
-        dailyPowerConsumption: d24,
-        monthlyPowerConsumption: d30,
-        yearlyPowerConsumption: m12,
-        deviceLastOn: st.deviceLastOn,
-        isCurrentlyOn: st.isCurrentlyOn,
-        deviceCurrentActiveTimeSec: st.deviceCurrentActiveTimeSec,
-      };
-    })
-  );
-
-  return { totals, modules };
+async function getDashboardFrontendData() {
+    const totals = await getDashboardTotals();
+    const { rows: mods } = await index_1.pool.query(`SELECT id, name FROM modules ORDER BY id ASC;`);
+    const modules = await Promise.all(mods.map(async (m) => {
+        const [d24, d30, m12, st] = await Promise.all([
+            getModuleLast24Hours(m.id),
+            getModuleLast30Days(m.id),
+            getModuleLast12Months(m.id),
+            getModuleLiveStatus(m.id),
+        ]);
+        return {
+            module_id: m.id,
+            deviceName: m.name,
+            dailyPowerConsumption: d24,
+            monthlyPowerConsumption: d30,
+            yearlyPowerConsumption: m12,
+            deviceLastOn: st.deviceLastOn,
+            isCurrentlyOn: st.isCurrentlyOn,
+            deviceCurrentActiveTimeSec: st.deviceCurrentActiveTimeSec,
+        };
+    }));
+    return { totals, modules };
 }
-
-export async function getRemainingForecastHoursForToday(moduleId: number) {
-  const { rows } = await pool.query(
-    `
+async function getRemainingForecastHoursForToday(moduleId) {
+    const { rows } = await index_1.pool.query(`
     WITH latest AS (
       SELECT MAX(forecast_timestamp) AS ft
       FROM forecast_data_hours
@@ -1070,55 +856,37 @@ export async function getRemainingForecastHoursForToday(moduleId: number) {
       AND (date_trunc('hour', l.ft) + (f.hour || ' hour')::interval) >= date_trunc('hour', now())
       AND (date_trunc('hour', l.ft) + (f.hour || ' hour')::interval) <  date_trunc('day', now()) + interval '1 day'
     ORDER BY hour_start ASC;
-    `,
-    [moduleId]
-  );
-
-  return rows;
+    `, [moduleId]);
+    return rows;
 }
-
-export async function getTodayActualHours(moduleId: number) {
-  const { rows } = await pool.query(
-    `
+async function getTodayActualHours(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT module_id, hour_start, total_power
     FROM module_data_hourly
     WHERE module_id = $1
       AND hour_start >= date_trunc('day', now())
       AND hour_start <  date_trunc('day', now()) + interval '1 day'
     ORDER BY hour_start ASC;
-    `,
-    [moduleId]
-  );
-
-  return rows;
+    `, [moduleId]);
+    return rows;
 }
-
-export async function getTodayActualAndRemainingForecast(moduleId: number) {
-  const [actual, forecast] = await Promise.all([
-    getTodayActualHours(moduleId),
-    getRemainingForecastHoursForToday(moduleId),
-  ]);
-
-  const boundaryHourStart = actual.length ? actual[actual.length - 1].hour_start : null;
-
-  return { moduleId, boundaryHourStart, actual, forecast };
+async function getTodayActualAndRemainingForecast(moduleId) {
+    const [actual, forecast] = await Promise.all([
+        getTodayActualHours(moduleId),
+        getRemainingForecastHoursForToday(moduleId),
+    ]);
+    const boundaryHourStart = actual.length ? actual[actual.length - 1].hour_start : null;
+    return { moduleId, boundaryHourStart, actual, forecast };
 }
-
-type SeriesPoint = { bucket_start: string; total_power: string };
-
-function num(x: any) {
-  return x == null ? 0 : Number(x);
+function num(x) {
+    return x == null ? 0 : Number(x);
 }
-
-
-export async function getForecastHours24(moduleId?: number) {
-  const params: any[] = [];
-
-  const whereModuleForecast = Number.isFinite(moduleId)
-    ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
-    : "";
-
-  const q = `
+async function getForecastHours24(moduleId) {
+    const params = [];
+    const whereModuleForecast = Number.isFinite(moduleId)
+        ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
+        : "";
+    const q = `
     WITH latest AS (
       SELECT MAX(forecast_timestamp) AS ft
       FROM forecast_data_hours f
@@ -1151,33 +919,25 @@ export async function getForecastHours24(moduleId?: number) {
       (SELECT json_agg(forecast ORDER BY bucket_start) FROM forecast) AS forecast,
       (SELECT ft FROM latest) AS forecast_timestamp
   `;
-
-  if (Number.isFinite(moduleId)) params.push(moduleId);
-
-  const { rows } = await pool.query(q, params);
-  const r = rows[0];
-
-  return {
-    forecastTimestamp: r.forecast_timestamp,
-    actual: r.actual ?? [],
-    forecast: r.forecast ?? [],
-  };
+    if (Number.isFinite(moduleId))
+        params.push(moduleId);
+    const { rows } = await index_1.pool.query(q, params);
+    const r = rows[0];
+    return {
+        forecastTimestamp: r.forecast_timestamp,
+        actual: r.actual ?? [],
+        forecast: r.forecast ?? [],
+    };
 }
-export async function getForecastDaysWindow(
-  daysAhead: 7 | 30,
-  moduleId?: number
-) {
-  const params: any[] = [daysAhead];
-
-  const whereModuleActual = Number.isFinite(moduleId)
-    ? (params.push(moduleId), `AND module_id = $${params.length}`)
-    : "";
-
-  const whereModuleForecast = Number.isFinite(moduleId)
-    ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
-    : "";
-
-  const q = `
+async function getForecastDaysWindow(daysAhead, moduleId) {
+    const params = [daysAhead];
+    const whereModuleActual = Number.isFinite(moduleId)
+        ? (params.push(moduleId), `AND module_id = $${params.length}`)
+        : "";
+    const whereModuleForecast = Number.isFinite(moduleId)
+        ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
+        : "";
+    const q = `
     WITH bounds AS (
       SELECT
         date_trunc('day', now())::date AS start_day,
@@ -1218,29 +978,24 @@ export async function getForecastDaysWindow(
       (SELECT start_day FROM bounds) AS window_start,
       (SELECT end_day FROM bounds) AS window_end
   `;
-
-  const { rows } = await pool.query(q, params);
-  const r = rows[0];
-
-  return {
-    windowStart: r.window_start,
-    windowEnd: r.window_end,
-    actual: r.actual ?? [],
-    forecast: r.forecast ?? [],
-  };
+    const { rows } = await index_1.pool.query(q, params);
+    const r = rows[0];
+    return {
+        windowStart: r.window_start,
+        windowEnd: r.window_end,
+        actual: r.actual ?? [],
+        forecast: r.forecast ?? [],
+    };
 }
-export async function getThisMonthTotals(moduleId?: number) {
-  const params: any[] = [];
-
-  const whereModuleActual = Number.isFinite(moduleId)
-    ? (params.push(moduleId), `AND module_id = $${params.length}`)
-    : "";
-
-  const whereModuleForecast = Number.isFinite(moduleId)
-    ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
-    : "";
-
-  const q = `
+async function getThisMonthTotals(moduleId) {
+    const params = [];
+    const whereModuleActual = Number.isFinite(moduleId)
+        ? (params.push(moduleId), `AND module_id = $${params.length}`)
+        : "";
+    const whereModuleForecast = Number.isFinite(moduleId)
+        ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
+        : "";
+    const q = `
     WITH bounds AS (
       SELECT
         date_trunc('month', now())::date AS m_start,
@@ -1272,29 +1027,22 @@ export async function getThisMonthTotals(moduleId?: number) {
       (SELECT total FROM actual) AS actual_this_month,
       (SELECT total FROM forecast_remaining) AS forecast_remaining_this_month
   `;
-
-  const { rows } = await pool.query(q, params);
-  const r = rows[0];
-
-  const actualThisMonth = num(r.actual_this_month);
-  const forecastRemainingThisMonth = num(r.forecast_remaining_this_month);
-
-  return {
-    actualThisMonth,
-    forecastRemainingThisMonth,
-    forecastFullMonthEstimate:
-      actualThisMonth + forecastRemainingThisMonth,
-  };
+    const { rows } = await index_1.pool.query(q, params);
+    const r = rows[0];
+    const actualThisMonth = num(r.actual_this_month);
+    const forecastRemainingThisMonth = num(r.forecast_remaining_this_month);
+    return {
+        actualThisMonth,
+        forecastRemainingThisMonth,
+        forecastFullMonthEstimate: actualThisMonth + forecastRemainingThisMonth,
+    };
 }
-
-export async function getForecastHours24_Limit(moduleId?: number) {
-  const params: any[] = [];
-
-  const whereModule = Number.isFinite(moduleId)
-    ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
-    : "";
-
-  const q = `
+async function getForecastHours24_Limit(moduleId) {
+    const params = [];
+    const whereModule = Number.isFinite(moduleId)
+        ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
+        : "";
+    const q = `
     WITH latest AS (
       SELECT MAX(forecast_timestamp) AS ft
       FROM forecast_data_hours f
@@ -1310,19 +1058,15 @@ export async function getForecastHours24_Limit(moduleId?: number) {
     ORDER BY bucket_start ASC
     LIMIT 24;
   `;
-
-  const { rows } = await pool.query(q, params);
-  return rows; // [{bucket_start, total_power}, ...]
+    const { rows } = await index_1.pool.query(q, params);
+    return rows; // [{bucket_start, total_power}, ...]
 }
-
-export async function getForecastDays7_Limit(moduleId?: number) {
-  const params: any[] = [];
-
-  const whereModule = Number.isFinite(moduleId)
-    ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
-    : "";
-
-  const q = `
+async function getForecastDays7_Limit(moduleId) {
+    const params = [];
+    const whereModule = Number.isFinite(moduleId)
+        ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
+        : "";
+    const q = `
     WITH latest AS (
       SELECT MAX(forecast_timestamp) AS ft
       FROM forecast_data_days f
@@ -1338,19 +1082,15 @@ export async function getForecastDays7_Limit(moduleId?: number) {
     ORDER BY bucket_start ASC
     LIMIT 7;
   `;
-
-  const { rows } = await pool.query(q, params);
-  return rows;
+    const { rows } = await index_1.pool.query(q, params);
+    return rows;
 }
-
-export async function getForecastDays30_Limit(moduleId?: number) {
-  const params: any[] = [];
-
-  const whereModule = Number.isFinite(moduleId)
-    ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
-    : "";
-
-  const q = `
+async function getForecastDays30_Limit(moduleId) {
+    const params = [];
+    const whereModule = Number.isFinite(moduleId)
+        ? (params.push(moduleId), `AND f.module_id = $${params.length}`)
+        : "";
+    const q = `
     WITH latest AS (
       SELECT MAX(forecast_timestamp) AS ft
       FROM forecast_data_days f
@@ -1366,16 +1106,11 @@ export async function getForecastDays30_Limit(moduleId?: number) {
     ORDER BY bucket_start ASC
     LIMIT 30;
   `;
-
-  const { rows } = await pool.query(q, params);
-  return rows;
+    const { rows } = await index_1.pool.query(q, params);
+    return rows;
 }
-export async function getActualHours24(moduleId: number) {
-  const { rows } = await pool.query<{
-    bucket_start: string;
-    total_power: string;
-  }>(
-    `
+async function getActualHours24(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT
       hour_start AS bucket_start,
       SUM(total_power)::numeric(14,2) AS total_power
@@ -1385,16 +1120,11 @@ export async function getActualHours24(moduleId: number) {
       AND hour_start <= date_trunc('hour', NOW())
     GROUP BY hour_start
     ORDER BY hour_start ASC;
-    `,
-    [moduleId]
-  );
-
-  return rows;
+    `, [moduleId]);
+    return rows;
 }
-
-export async function getActualDays7(moduleId: number) {
-  const { rows } = await pool.query<{ bucket_start: string; total_power: string }>(
-    `
+async function getActualDays7(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT
       day::timestamp AS bucket_start,
       SUM(total_power)::numeric(14,2) AS total_power
@@ -1404,16 +1134,12 @@ export async function getActualDays7(moduleId: number) {
       AND day <= CURRENT_DATE
     GROUP BY day
     ORDER BY day ASC;
-    `,
-    [moduleId]
-  );
-  return rows;
+    `, [moduleId]);
+    return rows;
 }
-
 // last 30 days actual (daily rollup)
-export async function getActualDays30(moduleId: number) {
-  const { rows } = await pool.query<{ bucket_start: string; total_power: string }>(
-    `
+async function getActualDays30(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT
       day::timestamp AS bucket_start,
       SUM(total_power)::numeric(14,2) AS total_power
@@ -1423,14 +1149,11 @@ export async function getActualDays30(moduleId: number) {
       AND day <= CURRENT_DATE
     GROUP BY day
     ORDER BY day ASC;
-    `,
-    [moduleId]
-  );
-  return rows;
+    `, [moduleId]);
+    return rows;
 }
-
-export async function getActualHours24_AllModules() {
-  const { rows } = await pool.query<{ bucket_start: string; total_power: string }>(`
+async function getActualHours24_AllModules() {
+    const { rows } = await index_1.pool.query(`
     SELECT
       hour_start AS bucket_start,
       SUM(total_power)::numeric(14,2) AS total_power
@@ -1440,11 +1163,10 @@ export async function getActualHours24_AllModules() {
     GROUP BY hour_start
     ORDER BY hour_start ASC;
   `);
-  return rows;
+    return rows;
 }
-
-export async function getActualDays7_AllModules() {
-  const { rows } = await pool.query<{ bucket_start: string; total_power: string }>(`
+async function getActualDays7_AllModules() {
+    const { rows } = await index_1.pool.query(`
     SELECT
       day::timestamp AS bucket_start,
       SUM(total_power)::numeric(14,2) AS total_power
@@ -1454,11 +1176,10 @@ export async function getActualDays7_AllModules() {
     GROUP BY day
     ORDER BY day ASC;
   `);
-  return rows;
+    return rows;
 }
-
-export async function getActualDays30_AllModules() {
-  const { rows } = await pool.query<{ bucket_start: string; total_power: string }>(`
+async function getActualDays30_AllModules() {
+    const { rows } = await index_1.pool.query(`
     SELECT
       day::timestamp AS bucket_start,
       SUM(total_power)::numeric(14,2) AS total_power
@@ -1468,11 +1189,10 @@ export async function getActualDays30_AllModules() {
     GROUP BY day
     ORDER BY day ASC;
   `);
-  return rows;
+    return rows;
 }
-
-export async function getForecastHours24_AllModules() {
-  const { rows } = await pool.query<{ bucket_start: string; total_power: string }>(`
+async function getForecastHours24_AllModules() {
+    const { rows } = await index_1.pool.query(`
     WITH latest AS (
       SELECT MAX(forecast_timestamp) AS ft
       FROM forecast_data_hours
@@ -1486,11 +1206,10 @@ export async function getForecastHours24_AllModules() {
     ORDER BY bucket_start ASC
     LIMIT 24;
   `);
-  return rows;
+    return rows;
 }
-
-export async function getForecastDays7_AllModules() {
-  const { rows } = await pool.query<{ bucket_start: string; total_power: string }>(`
+async function getForecastDays7_AllModules() {
+    const { rows } = await index_1.pool.query(`
     WITH latest AS (
       SELECT MAX(forecast_timestamp) AS ft
       FROM forecast_data_days
@@ -1504,11 +1223,10 @@ export async function getForecastDays7_AllModules() {
     ORDER BY bucket_start ASC
     LIMIT 7;
   `);
-  return rows;
+    return rows;
 }
-
-export async function getForecastDays30_AllModules() {
-  const { rows } = await pool.query<{ bucket_start: string; total_power: string }>(`
+async function getForecastDays30_AllModules() {
+    const { rows } = await index_1.pool.query(`
     WITH latest AS (
       SELECT MAX(forecast_timestamp) AS ft
       FROM forecast_data_days
@@ -1522,38 +1240,35 @@ export async function getForecastDays30_AllModules() {
     ORDER BY bucket_start ASC
     LIMIT 30;
   `);
-  return rows;
+    return rows;
 }
-
-export async function setLastOnNow(moduleId: number) {
-  await pool.query(`
+async function setLastOnNow(moduleId) {
+    await index_1.pool.query(`
     UPDATE switching_data
     SET status = TRUE, last_on = NOW()
     WHERE module_id = $1;
-  `, [moduleId]); 
-} 
-
-export async function setLastOffNow(moduleId: number) {
-  await pool.query(`
+  `, [moduleId]);
+}
+async function setLastOffNow(moduleId) {
+    await index_1.pool.query(`
     UPDATE switching_data
     SET status = FALSE, last_off = NOW()
     WHERE module_id = $1;
-  `, [moduleId]); 
+  `, [moduleId]);
 }
-
-export async function setStatusChange(moduleId: number, status: boolean) {
-  await pool.query(`
+async function setStatusChange(moduleId, status) {
+    await index_1.pool.query(`
     UPDATE switching_data
     SET statuschanged = $2
     WHERE module_id = $1;
-  `, [moduleId, status]); 
+  `, [moduleId, status]);
 }
-
-export async function getStatusChange(moduleId: number) {
-  const { rows } = await pool.query(`
+async function getStatusChange(moduleId) {
+    const { rows } = await index_1.pool.query(`
     SELECT statuschanged
     FROM switching_data
     WHERE module_id = $1;
   `, [moduleId]);
-  return rows[0]?.statuschanged;
+    return rows[0]?.statuschanged;
 }
+//# sourceMappingURL=dbUtility.js.map

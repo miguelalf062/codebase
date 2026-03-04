@@ -1,5 +1,5 @@
 import path from "path";
-
+import os from "os";
 import * as dbUtility  from "./dbUtility";
 import { spawn } from "child_process";
 import * as forecasting2 from "./forecasting2";
@@ -21,10 +21,13 @@ export async function runForecastProcess(processMethod : string, data : number[]
   return new Promise((resolve, reject) => {
     const payload = { process: processMethod, data }
     const script = path.resolve(process.cwd(), "src/processing/predict.py");
+    const isWindows = os.platform() === "win32";
+
     const PYTHON_PATH = path.resolve(
-      process.cwd(),
-      "src/processing/pyenv/Scripts/python.exe"
-    );
+        process.cwd(),
+        "src/processing/pyenv",
+        isWindows ? "Scripts/python.exe" : "bin/python"
+        );
 
     const SCRIPT_PATH = path.resolve(
       process.cwd(),
